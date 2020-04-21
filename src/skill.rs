@@ -9,8 +9,11 @@ pub struct Skill {
 	attribute: Option<String>,
 	skill_type: String,
 	description: String,
-	// cost_adrenaline: Option<u8>,
+	cost_adrenaline: Option<u8>,
+	cost_overcast: Option<u8>,
+	cost_upkeep: Option<i8>,
 	cost_energy: Option<u8>,
+	cost_sacrifice: Option<u8>,
 	cast_time: Option<f32>,
 	recharge_time: Option<u8>,
 	is_quest_reward: bool,
@@ -20,15 +23,17 @@ pub struct Skill {
 impl TryFrom<ElementRef<'_>> for Skill {
 	type Error = &'static str;
 
-	fn try_from(value: ElementRef) -> Result<Self, Self::Error> {
-		if value.value().name() != "tr" {
+	fn try_from(row: ElementRef) -> Result<Self, Self::Error> {
+		if row.value().name() != "tr" {
 			return Err("Not a table row!");
 		}
 		let select_cols = Selector::parse("th, td").unwrap();
-		if value.select(&select_cols).count() != 10 {
+		if row.select(&select_cols).count() != 10 {
 			return Err("Wrong number of cols!");
 		}
-		let mut cols = value.select(&select_cols);
+
+
+		let mut cols = row.select(&select_cols);
 
 		let _ = cols.next(); // TODO image
 		let name = cols.next().map(innerText).unwrap().into();
@@ -38,7 +43,12 @@ impl TryFrom<ElementRef<'_>> for Skill {
 		let skill_type = split_description.next().unwrap().to_string();
 		let description = split_description.next().unwrap().to_string();
 
+		let mut cost_adrenaline = None;
+		let mut cost_overcast = None;
+		let mut cost_sacrifice = None;
+		let mut cost_upkeep = None;
 		let _ = cols.next(); // TODO adrenaline, blood sacrifice, perhaps others, or None
+
 		let cost_energy: Option<u8> = cols.next().map(numerical_row_value).unwrap();
 		let cast_time: Option<f32> = cols.next().map(cast_time_value).unwrap();
 		let recharge_time: Option<u8> = cols.next().map(numerical_row_value).unwrap();
@@ -56,6 +66,10 @@ impl TryFrom<ElementRef<'_>> for Skill {
 			recharge_time,
 			attribute,
 			campaign,
+			cost_adrenaline,
+			cost_overcast,
+			cost_upkeep,
+			cost_sacrifice,
 		})
 	}
 }
@@ -96,7 +110,45 @@ fn cast_time_value(el: ElementRef) -> Option<f32> {
 	}
 }
 
-#[derive(Copy, Clone)]
+fn upkeep_value(el: ElementRef) -> Option<i8> {
+	match attribute_value(el) {
+		Some(val) => Some(val.parse::<i8>().unwrap()),
+		None => None,
+	}
+}
+
+fn adrenaline_value(el: ElementRef) -> Option<u8> {
+	match upkeep_value(el) {
+		Some(n) if n < 0 => panic!("Unexpected negative value {}", n),
+		Some(n) => Some(n as u8),
+		None => None,
+	}
+}
+
+fn overcast_value(el: ElementRef) -> Option<u8> {
+	adrenaline_value(el)
+}
+
+fn sacrifice_value(el: ElementRef) -> Option<u8> {
+	let node = el.children().skip(1).next().unwrap().value();
+	if node.is_text() {
+		Some(
+			node
+				.as_text()
+				.unwrap()
+				.to_string()
+				.split('%')
+				.next()
+				.unwrap()
+				.parse::<u8>()
+				.unwrap(),
+		)
+	} else {
+		None
+	}
+}
+
+#[derive(Copy, Clone, Debug)]
 enum Profession {
 	Warrior,
 	Ranger,
