@@ -6,14 +6,15 @@ pub struct Skill {
 	// icon_url: String,
 	pub name: String,
 	// profession: Option<Profession>,
-	// attribute: Option<String>,
+	attribute: Option<String>,
 	skill_type: String,
 	description: String,
 	// cost_adrenaline: Option<u8>,
-	// cost_energy: Option<u8>,
-	// cast_time: Option<u8>,
-	// recharge_time: Option<u8>,
-	// is_quest_reward: bool,
+	cost_energy: Option<u8>,
+	cast_time: Option<f32>,
+	recharge_time: Option<u8>,
+	is_quest_reward: bool,
+	campaign: String,
 }
 
 impl TryFrom<ElementRef<'_>> for Skill {
@@ -37,19 +38,34 @@ impl TryFrom<ElementRef<'_>> for Skill {
 		let skill_type = split_description.next().unwrap().to_string();
 		let description = split_description.next().unwrap().to_string();
 
-		let _ = cols.next(); // TODO adrenaline
-		let _ = cols.next(); // TODO energy
-		let _ = cols.next(); // TODO cast time
-		let _ = cols.next(); // TODO recharge time
-		let _ = cols.next(); // TODO quest reward
-		let _ = cols.next(); // TODO attribute
-		let _ = cols.next(); // TODO campaign
+		let _ = cols.next(); // TODO adrenaline, blood sacrifice, perhaps others, or None
+		let cost_energy: Option<u8> = cols.next().map(numerical_row_value).unwrap();
+		let cast_time: Option<f32> = cols.next().map(cast_time_value).unwrap();
+		let recharge_time: Option<u8> = cols.next().map(numerical_row_value).unwrap();
+		let is_quest_reward = cols.next().unwrap().inner_html().len() > 0;
+		let attribute = cols.next().map(attribute_value).unwrap();
+		let campaign: String = cols.next().map(innerText).unwrap();
 
 		Ok(Self {
 			name,
 			description,
 			skill_type,
+			is_quest_reward,
+			cost_energy,
+			cast_time,
+			recharge_time,
+			attribute,
+			campaign,
 		})
+	}
+}
+
+fn attribute_value(el: ElementRef) -> Option<String> {
+	let node = el.children().next().unwrap().value();
+	if node.is_text() {
+		Some(node.as_text().unwrap().to_string())
+	} else {
+		None
 	}
 }
 
@@ -60,6 +76,24 @@ fn innerText(el: ElementRef) -> String {
 		.collect::<String>()
 		.trim()
 		.to_string()
+}
+
+fn numerical_row_value(el: ElementRef) -> Option<u8> {
+	let select_span = Selector::parse("span").unwrap();
+	let text: String = el.select(&select_span).next().map(innerText).unwrap();
+	match text.parse::<u8>().unwrap() {
+		n if n == 0 => None,
+		n => Some(n),
+	}
+}
+
+fn cast_time_value(el: ElementRef) -> Option<f32> {
+	let select_span = Selector::parse("span").unwrap();
+	let text: String = el.select(&select_span).next().map(innerText).unwrap();
+	match text.parse::<f32>().unwrap() {
+		n if !n.is_normal() => None,
+		n => Some(n),
+	}
 }
 
 #[derive(Copy, Clone)]
