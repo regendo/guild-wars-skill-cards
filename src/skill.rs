@@ -55,7 +55,11 @@ impl TryFrom<ElementRef<'_>> for Skill {
 
 #[allow(non_snake_case)] // This mimics the element.innerText method found in browsers.
 fn innerText(el: ElementRef) -> String {
-	el.text().map(|t| t.to_string()).collect::<String>()
+	el.text()
+		.map(|t| t.to_string())
+		.collect::<String>()
+		.trim()
+		.to_string()
 }
 
 #[derive(Copy, Clone)]
