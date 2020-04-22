@@ -172,7 +172,7 @@ fn overcast_value(el: ElementRef) -> Option<u8> {
 }
 
 fn sacrifice_value(el: ElementRef) -> Option<u8> {
-	let node = el.children().skip(1).next().unwrap().value();
+	let node = el.children().skip(1).next()?.value();
 	if node.is_text() {
 		Some(
 			node
