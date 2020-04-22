@@ -4,7 +4,7 @@ use std::convert::TryFrom;
 
 #[derive(Debug, Clone)]
 pub struct Skill {
-	// icon_url: String,
+	icon_url: String,
 	pub name: String,
 	profession: Option<Profession>,
 	attribute: Option<String>,
@@ -46,7 +46,17 @@ impl TryFrom<ElementRef<'_>> for Skill {
 
 		let mut cols = row.select(&select_cols);
 
-		let _ = cols.next(); // TODO image
+		let icon_field = cols.next().unwrap();
+		let icon_selection = Selector::parse("a img").unwrap();
+		let icon_url = icon_field
+			.select(&icon_selection)
+			.next()
+			.unwrap()
+			.value()
+			.attr("src")
+			.unwrap()
+			.to_string();
+
 		let name = cols.next().map(innerText).unwrap().into();
 
 		let full_description: String = cols.next().map(innerText).unwrap();
@@ -101,6 +111,7 @@ impl TryFrom<ElementRef<'_>> for Skill {
 			cost_upkeep,
 			cost_sacrifice,
 			profession,
+			icon_url,
 		})
 	}
 }
