@@ -1,3 +1,4 @@
+use regex::Regex;
 use scraper::{element_ref::ElementRef, Selector};
 use std::convert::TryFrom;
 
@@ -5,7 +6,7 @@ use std::convert::TryFrom;
 pub struct Skill {
 	// icon_url: String,
 	pub name: String,
-	// profession: Option<Profession>,
+	profession: Option<Profession>,
 	attribute: Option<String>,
 	skill_type: String,
 	description: String,
@@ -32,6 +33,16 @@ impl TryFrom<ElementRef<'_>> for Skill {
 			return Err("Wrong number of cols!");
 		}
 
+		let style = row.value().attr("style").unwrap();
+		let re = Regex::new(r"background: (#[0-9A-F]{6})").unwrap();
+		let color = re
+			.captures_iter(style)
+			.next()
+			.unwrap()
+			.get(1)
+			.unwrap()
+			.as_str();
+		let profession = Profession::from_table_background_color(color);
 
 		let mut cols = row.select(&select_cols);
 
@@ -47,7 +58,26 @@ impl TryFrom<ElementRef<'_>> for Skill {
 		let mut cost_overcast = None;
 		let mut cost_sacrifice = None;
 		let mut cost_upkeep = None;
-		let _ = cols.next(); // TODO adrenaline, blood sacrifice, perhaps others, or None
+		let specific_col = cols.next();
+		match profession {
+			Some(Profession::Necromancer) | Some(Profession::Ritualist) => {
+				cost_sacrifice = specific_col.map(sacrifice_value).unwrap();
+			}
+			Some(Profession::Warrior)
+			| Some(Profession::Paragon)
+			| Some(Profession::Dervish)
+			| None => {
+				// Norn and Deldrimor skills without a profession have adrenaline costs
+				cost_adrenaline = specific_col.map(adrenaline_value).unwrap();
+			}
+			Some(Profession::Elementalist) => {
+				cost_overcast = specific_col.map(overcast_value).unwrap();
+			}
+			Some(Profession::Monk) | Some(Profession::Assassin) => {
+				cost_upkeep = specific_col.map(upkeep_value).unwrap();
+			}
+			Some(Profession::Mesmer) | Some(Profession::Ranger) => (),
+		}
 
 		let cost_energy: Option<u8> = cols.next().map(numerical_row_value).unwrap();
 		let cast_time: Option<f32> = cols.next().map(cast_time_value).unwrap();
@@ -70,6 +100,7 @@ impl TryFrom<ElementRef<'_>> for Skill {
 			cost_overcast,
 			cost_upkeep,
 			cost_sacrifice,
+			profession,
 		})
 	}
 }
@@ -77,7 +108,7 @@ impl TryFrom<ElementRef<'_>> for Skill {
 fn attribute_value(el: ElementRef) -> Option<String> {
 	let node = el.children().next().unwrap().value();
 	if node.is_text() {
-		Some(node.as_text().unwrap().to_string())
+		Some(node.as_text().unwrap().trim().to_string())
 	} else {
 		None
 	}
@@ -153,11 +184,28 @@ enum Profession {
 	Warrior,
 	Ranger,
 	Monk,
-	Mesmer,
 	Necromancer,
+	Mesmer,
 	Elementalist,
 	Assassin,
 	Ritualist,
-	Dervish,
 	Paragon,
+	Dervish,
+}
+impl Profession {
+	fn from_table_background_color(color: &str) -> Option<Self> {
+		match color {
+			"#FFFFCC" => Some(Profession::Warrior),
+			"#EEFFCC" => Some(Profession::Ranger),
+			"#CCEEFF" => Some(Profession::Monk),
+			"#CCFFCC" => Some(Profession::Necromancer),
+			"#EEDDFF" => Some(Profession::Mesmer),
+			"#FFDDDD" => Some(Profession::Elementalist),
+			"#FFEEFF" => Some(Profession::Assassin),
+			"#DDFFFF" => Some(Profession::Ritualist),
+			"#FFEECC" => Some(Profession::Paragon),
+			"#EEEEFF" => Some(Profession::Dervish),
+			_ => None,
+		}
+	}
 }
