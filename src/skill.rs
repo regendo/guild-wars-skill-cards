@@ -1,8 +1,10 @@
 use regex::Regex;
 use scraper::{element_ref::ElementRef, Selector};
+use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
+use std::fmt;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Skill {
 	icon_url: String,
 	pub name: String,
@@ -194,8 +196,8 @@ fn sacrifice_value(el: ElementRef) -> Option<u8> {
 	}
 }
 
-#[derive(Copy, Clone, Debug)]
-enum Profession {
+#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
+pub enum Profession {
 	Warrior,
 	Ranger,
 	Monk,
@@ -210,17 +212,50 @@ enum Profession {
 impl Profession {
 	fn from_table_background_color(color: &str) -> Option<Self> {
 		match color {
-			"#FFFFCC" => Some(Profession::Warrior),
-			"#EEFFCC" => Some(Profession::Ranger),
-			"#CCEEFF" => Some(Profession::Monk),
-			"#CCFFCC" => Some(Profession::Necromancer),
-			"#EEDDFF" => Some(Profession::Mesmer),
-			"#FFDDDD" => Some(Profession::Elementalist),
-			"#FFEEFF" => Some(Profession::Assassin),
-			"#DDFFFF" => Some(Profession::Ritualist),
-			"#FFEECC" => Some(Profession::Paragon),
-			"#EEEEFF" => Some(Profession::Dervish),
+			"#FFFFCC" => Some(Self::Warrior),
+			"#EEFFCC" => Some(Self::Ranger),
+			"#CCEEFF" => Some(Self::Monk),
+			"#CCFFCC" => Some(Self::Necromancer),
+			"#EEDDFF" => Some(Self::Mesmer),
+			"#FFDDDD" => Some(Self::Elementalist),
+			"#FFEEFF" => Some(Self::Assassin),
+			"#DDFFFF" => Some(Self::Ritualist),
+			"#FFEECC" => Some(Self::Paragon),
+			"#EEEEFF" => Some(Self::Dervish),
 			_ => None,
 		}
+	}
+	pub fn iter() -> impl Iterator<Item = Self> {
+		[
+			Self::Warrior,
+			Self::Ranger,
+			Self::Monk,
+			Self::Necromancer,
+			Self::Mesmer,
+			Self::Elementalist,
+			Self::Assassin,
+			Self::Ritualist,
+			Self::Paragon,
+			Self::Dervish,
+		]
+		.iter()
+		.copied()
+	}
+}
+impl fmt::Display for Profession {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		let name = match self {
+			Self::Warrior => "Warrior",
+			Self::Ranger => "Ranger",
+			Self::Monk => "Monk",
+			Self::Necromancer => "Necromancer",
+			Self::Mesmer => "Mesmer",
+			Self::Elementalist => "Elementalist",
+			Self::Assassin => "Assassin",
+			Self::Ritualist => "Ritualist",
+			Self::Paragon => "Paragon",
+			Self::Dervish => "Dervish",
+		};
+		write!(f, "{}", name)
 	}
 }
