@@ -1,4 +1,4 @@
-use regex::Regex;
+use regex::{Captures, Regex};
 use scraper::{element_ref::ElementRef, Selector};
 use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
@@ -213,10 +213,35 @@ fn numerical_row_value(el: ElementRef) -> Option<u8> {
 	}
 }
 
+fn parse_described_float(capture: Captures) -> f32 {
+	let dividend = capture // upper
+		.get(1)
+		.unwrap()
+		.as_str()
+		.trim()
+		.parse::<f32>()
+		.unwrap();
+	let divisor = capture // lower
+		.get(2)
+		.unwrap()
+		.as_str()
+		.trim()
+		.parse::<f32>()
+		.unwrap();
+	dividend / divisor
+}
+
 fn cast_time_value(el: ElementRef) -> Option<f32> {
 	let select_span = Selector::parse("span").unwrap();
 	let text: String = el.select(&select_span).next().map(innerText).unwrap();
-	match text.parse::<f32>().unwrap() {
+	let division_pattern = Regex::new("([0-9]+)/([0-9]+)").unwrap();
+	let cast_time = if division_pattern.is_match(&*text) {
+		parse_described_float(division_pattern.captures_iter(&text).next().unwrap())
+	} else {
+		text.parse::<f32>().unwrap()
+	};
+
+	match cast_time {
 		n if !n.is_normal() => None,
 		n => Some(n),
 	}
