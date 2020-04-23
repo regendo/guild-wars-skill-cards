@@ -38,7 +38,7 @@ pub struct Skill {
 	icon_url: String,
 	pub name: String,
 	profession: Profession,
-	attribute: Option<String>,
+	pub attribute: Option<String>,
 	skill_type: String,
 	description: String,
 	cost_energy: Option<u8>,
@@ -50,7 +50,7 @@ pub struct Skill {
 	recharge_time: Option<u8>,
 	is_quest_reward: bool,
 	campaign: String,
-	split_by_game_mode: Option<GameMode>,
+	pub split_by_game_mode: Option<GameMode>,
 	is_pve_only: bool,
 	is_elite: bool,
 }
@@ -300,7 +300,7 @@ fn sacrifice_value(el: ElementRef) -> Option<u8> {
 }
 
 #[derive(Copy, Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
-enum GameMode {
+pub enum GameMode {
 	PvE,
 	PvP,
 }
