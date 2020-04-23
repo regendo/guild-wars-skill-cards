@@ -4,18 +4,46 @@ use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
 use std::fmt;
 
+mod helpers {
+	use super::*;
+
+	pub fn determine_profession(row: ElementRef) -> Option<Profession> {
+		let style = row.value().attr("style").unwrap();
+		let re = Regex::new(r"background: (#[0-9A-F]{6})").unwrap();
+		let color = re
+			.captures_iter(style)
+			.next()
+			.unwrap()
+			.get(1)
+			.unwrap()
+			.as_str();
+		Profession::from_table_background_color(color)
+	}
+
+	pub fn determine_icon_url(col: ElementRef) -> String {
+		let icon_selection = Selector::parse("a img").unwrap();
+		col.select(&icon_selection)
+			.next()
+			.unwrap()
+			.value()
+			.attr("src")
+			.unwrap()
+			.to_string()
+	}
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Skill {
 	icon_url: String,
-	pub name: String,
+	name: String,
 	profession: Option<Profession>,
 	attribute: Option<String>,
 	skill_type: String,
 	description: String,
+	cost_energy: Option<u8>,
 	cost_adrenaline: Option<u8>,
 	cost_overcast: Option<u8>,
 	cost_upkeep: Option<i8>,
-	cost_energy: Option<u8>,
 	cost_sacrifice: Option<u8>,
 	cast_time: Option<f32>,
 	recharge_time: Option<u8>,
@@ -24,12 +52,6 @@ pub struct Skill {
 	split_by_game_mode: Option<GameMode>,
 	is_pve_only: bool,
 	is_elite: bool,
-}
-
-#[derive(Copy, Clone, Debug, Deserialize, Serialize)]
-enum GameMode {
-	PvE,
-	PvP,
 }
 
 impl TryFrom<ElementRef<'_>> for Skill {
@@ -43,30 +65,10 @@ impl TryFrom<ElementRef<'_>> for Skill {
 		if row.select(&select_cols).count() != 10 {
 			return Err("Wrong number of cols!");
 		}
-
-		let style = row.value().attr("style").unwrap();
-		let re = Regex::new(r"background: (#[0-9A-F]{6})").unwrap();
-		let color = re
-			.captures_iter(style)
-			.next()
-			.unwrap()
-			.get(1)
-			.unwrap()
-			.as_str();
-		let profession = Profession::from_table_background_color(color);
-
 		let mut cols = row.select(&select_cols);
 
-		let icon_field = cols.next().unwrap();
-		let icon_selection = Selector::parse("a img").unwrap();
-		let icon_url = icon_field
-			.select(&icon_selection)
-			.next()
-			.unwrap()
-			.value()
-			.attr("src")
-			.unwrap()
-			.to_string();
+		let profession = helpers::determine_profession(row);
+		let icon_url = helpers::determine_icon_url(cols.next().unwrap());
 
 		let mut name: String = cols.next().map(innerText).unwrap();
 		let mut split_by_game_mode = None;
@@ -118,7 +120,7 @@ impl TryFrom<ElementRef<'_>> for Skill {
 		let cost_energy: Option<u8> = cols.next().map(numerical_row_value).unwrap();
 		let cast_time: Option<f32> = cols.next().map(cast_time_value).unwrap();
 		let recharge_time: Option<u8> = cols.next().map(numerical_row_value).unwrap();
-		let is_quest_reward = cols.next().unwrap().inner_html().len() > 0;
+		let is_quest_reward = !cols.next().unwrap().inner_html().is_empty();
 		let attribute: Option<String> = cols.next().map(attribute_value).unwrap();
 		let campaign: String = cols.next().map(innerText).unwrap();
 
@@ -233,6 +235,12 @@ fn sacrifice_value(el: ElementRef) -> Option<u8> {
 	} else {
 		None
 	}
+}
+
+#[derive(Copy, Clone, Debug, Deserialize, Serialize)]
+enum GameMode {
+	PvE,
+	PvP,
 }
 
 #[derive(Copy, Clone, Debug, Serialize, Deserialize)]
