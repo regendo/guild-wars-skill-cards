@@ -7,7 +7,7 @@ use std::fs;
 mod skill;
 use skill::{Profession, Skill};
 
-fn build_page_cache(profession: Option<skill::Profession>) {
+fn build_skill_cache(profession: Option<skill::Profession>) {
 	if let Some(profession) = profession {
 		let url = format!(
 			"https://wiki.guildwars.com/wiki/List_of_{}_skills",
@@ -19,10 +19,7 @@ fn build_page_cache(profession: Option<skill::Profession>) {
 			.expect(&format!("Failed to get response text from {}", url));
 		let skills = parse_skills(&raw_html);
 		let path = &format!("cache/{}.json", profession);
-		fs::DirBuilder::new()
-			.recursive(true)
-			.create("cache")
-			.expect("Couldn't create cache directory!");
+
 		fs::write(path, serde_json::to_string(&skills).unwrap())
 			.expect(&format!("Couldn't write to file {}", path));
 	}
@@ -30,8 +27,15 @@ fn build_page_cache(profession: Option<skill::Profession>) {
 }
 
 #[allow(dead_code)]
-fn load_cached_page() -> Result<String, std::io::Error> {
-	fs::read_to_string("body.html")
+fn load_skill_cache(profession: Option<skill::Profession>) -> Vec<Skill> {
+	if let Some(profession) = profession {
+		let path = format!("cache/{}.json", profession);
+		let raw_skills = fs::read_to_string(path).expect("Couldn't read from file!");
+		let skills: Vec<Skill> = serde_json::from_str(&raw_skills).unwrap();
+		return skills;
+	}
+	// TODO else case for non-profession skills
+	vec![]
 }
 
 fn parse_skills(raw_html: &str) -> Vec<Skill> {
@@ -43,8 +47,16 @@ fn parse_skills(raw_html: &str) -> Vec<Skill> {
 }
 
 fn main() {
+	fs::DirBuilder::new()
+		.recursive(true)
+		.create("cache")
+		.expect("Couldn't create cache directory!");
 	// for profession in Profession::iter() {
 	// 	build_page_cache(Some(profession));
 	// }
-	build_page_cache(Some(Profession::Elementalist));
+	// build_page_cache(Some(Profession::Elementalist));
+	let skills = load_skill_cache(Some(Profession::Elementalist));
+	println!("{} Elementalist skills loaded.", skills.len());
+	println!("Excerpt:");
+	println!("{:?}", skills[0]);
 }
