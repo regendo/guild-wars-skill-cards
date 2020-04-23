@@ -21,6 +21,15 @@ pub struct Skill {
 	recharge_time: Option<u8>,
 	is_quest_reward: bool,
 	campaign: String,
+	split_by_game_mode: Option<GameMode>,
+	is_pve_only: bool,
+	is_elite: bool,
+}
+
+#[derive(Copy, Clone, Debug, Deserialize, Serialize)]
+enum GameMode {
+	PvE,
+	PvP,
 }
 
 impl TryFrom<ElementRef<'_>> for Skill {
@@ -59,11 +68,22 @@ impl TryFrom<ElementRef<'_>> for Skill {
 			.unwrap()
 			.to_string();
 
-		let name = cols.next().map(innerText).unwrap().into();
+		let mut name: String = cols.next().map(innerText).unwrap();
+		let mut split_by_game_mode = None;
+		if name.ends_with(" (PvP)") {
+			split_by_game_mode = Some(GameMode::PvP);
+			name = name.trim_end_matches(" (PvP)").to_owned();
+			// TODO: cannot detect PvE versions of game mode split skills
+		}
 
 		let full_description: String = cols.next().map(innerText).unwrap();
 		let mut split_description = full_description.splitn(2, ". ");
-		let skill_type = split_description.next().unwrap().to_string();
+		let mut skill_type = split_description.next().unwrap().to_string();
+		let mut is_elite = false;
+		if skill_type.starts_with("Elite ") {
+			is_elite = true;
+			skill_type = skill_type.trim_start_matches("Elite ").to_owned();
+		}
 		let description = split_description.next().unwrap().to_string();
 
 		let mut cost_adrenaline = None;
@@ -99,8 +119,24 @@ impl TryFrom<ElementRef<'_>> for Skill {
 		let cast_time: Option<f32> = cols.next().map(cast_time_value).unwrap();
 		let recharge_time: Option<u8> = cols.next().map(numerical_row_value).unwrap();
 		let is_quest_reward = cols.next().unwrap().inner_html().len() > 0;
-		let attribute = cols.next().map(attribute_value).unwrap();
+		let attribute: Option<String> = cols.next().map(attribute_value).unwrap();
 		let campaign: String = cols.next().map(innerText).unwrap();
+
+		let is_pve_only = (attribute.is_some() && attribute.clone().unwrap().ends_with(" rank"))
+			|| [
+				"Signet of Capture",
+				"\"Together as One!\"",
+				"Heroic Refrain",
+				"Judgment Strike",
+				"Over the Limit",
+				"Seven Weapons Stance",
+				"Shadow Theft",
+				"Soul Taker",
+				"Time Ward",
+				"Vow of Revolution",
+				"Weapons of Three Forges",
+			]
+			.contains(&&*name);
 
 		Ok(Self {
 			name,
@@ -118,6 +154,9 @@ impl TryFrom<ElementRef<'_>> for Skill {
 			cost_sacrifice,
 			profession,
 			icon_url,
+			is_elite,
+			split_by_game_mode,
+			is_pve_only,
 		})
 	}
 }

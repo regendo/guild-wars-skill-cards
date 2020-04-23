@@ -52,11 +52,9 @@ fn main() {
 		.create("cache")
 		.expect("Couldn't create cache directory!");
 	// for profession in Profession::iter() {
-	// 	build_page_cache(Some(profession));
+	// 	build_skill_cache(Some(profession));
 	// }
-	// build_page_cache(Some(Profession::Elementalist));
+	build_skill_cache(Some(Profession::Elementalist));
 	let skills = load_skill_cache(Some(Profession::Elementalist));
 	println!("{} Elementalist skills loaded.", skills.len());
-	println!("Excerpt:");
-	println!("{:?}", skills[0]);
 }
