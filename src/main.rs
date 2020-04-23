@@ -44,14 +44,14 @@ fn main() {
 		.recursive(true)
 		.create("cache")
 		.expect("Couldn't create cache directory!");
-	for profession in Profession::iter() {
-		build_skill_cache(profession);
-	}
+	// for profession in Profession::iter() {
+	// 	build_skill_cache(profession);
+	// }
 	let skills: Vec<Skill> = Profession::iter()
 		.flat_map(|profession| load_skill_cache(profession))
 		.collect();
 	println!("{} skills loaded.", skills.len());
-	for skill in skills {
-		println!("{}—{}", skill.type_line(), skill.name);
+	for skill in skills.iter().filter(|s| !s.is_pvp_variant()) {
+		println!("{}: {}", skill.type_line(), skill.name);
 	}
 }

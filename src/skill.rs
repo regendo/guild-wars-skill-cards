@@ -66,14 +66,27 @@ impl Skill {
 			line.append(" ");
 		}
 		if self.is_pve_only {
-			line.append("PvE");
-		}
-		if let Some(attribute) = &self.attribute {
-			line.append(&**attribute);
+			line.append("PvE ");
 		}
 		line.append(&*self.skill_type);
+		if let Some(attribute) = &self.attribute {
+			line.append(" (");
+			if attribute.ends_with(" rank") {
+				line.append(attribute.trim_end_matches(" rank"));
+			} else {
+				line.append(&**attribute);
+			}
+			line.append(")")
+		}
 
 		line.string().unwrap()
+	}
+
+	pub fn is_pvp_variant(&self) -> bool {
+		match self.split_by_game_mode {
+			Some(GameMode::PvP) => true,
+			_ => false,
+		}
 	}
 }
 
