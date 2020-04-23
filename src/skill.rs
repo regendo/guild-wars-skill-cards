@@ -81,7 +81,11 @@ impl TryFrom<ElementRef<'_>> for Skill {
 				cost_adrenaline = specific_col.map(adrenaline_value).unwrap();
 			}
 			Some(Profession::Elementalist) => {
-				cost_overcast = specific_col.map(overcast_value).unwrap();
+				if name == "Over the Limit" {
+					cost_upkeep = specific_col.map(upkeep_value).unwrap();
+				} else {
+					cost_overcast = specific_col.map(overcast_value).unwrap();
+				}
 			}
 			Some(Profession::Monk) | Some(Profession::Assassin) => {
 				cost_upkeep = specific_col.map(upkeep_value).unwrap();
