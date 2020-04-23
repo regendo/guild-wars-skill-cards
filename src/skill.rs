@@ -3,6 +3,7 @@ use scraper::{element_ref::ElementRef, Selector};
 use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
 use std::fmt;
+use string_builder;
 
 mod helpers {
 	use super::*;
@@ -35,7 +36,7 @@ mod helpers {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Skill {
 	icon_url: String,
-	name: String,
+	pub name: String,
 	profession: Profession,
 	attribute: Option<String>,
 	skill_type: String,
@@ -52,6 +53,28 @@ pub struct Skill {
 	split_by_game_mode: Option<GameMode>,
 	is_pve_only: bool,
 	is_elite: bool,
+}
+
+impl Skill {
+	pub fn type_line(&self) -> String {
+		let mut line = string_builder::Builder::default();
+		if self.is_elite {
+			line.append("Elite ");
+		}
+		if self.profession != Profession::Common {
+			line.append(self.profession.to_string());
+			line.append(" ");
+		}
+		if self.is_pve_only {
+			line.append("PvE");
+		}
+		if let Some(attribute) = &self.attribute {
+			line.append(&**attribute);
+		}
+		line.append(&*self.skill_type);
+
+		line.string().unwrap()
+	}
 }
 
 impl TryFrom<ElementRef<'_>> for Skill {
@@ -237,13 +260,13 @@ fn sacrifice_value(el: ElementRef) -> Option<u8> {
 	}
 }
 
-#[derive(Copy, Clone, Debug, Deserialize, Serialize)]
+#[derive(Copy, Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
 enum GameMode {
 	PvE,
 	PvP,
 }
 
-#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]
 pub enum Profession {
 	Warrior,
 	Ranger,
