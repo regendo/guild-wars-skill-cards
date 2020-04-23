@@ -115,6 +115,7 @@ impl TryFrom<ElementRef<'_>> for Skill {
 		}
 
 		let full_description: String = cols.next().map(innerText).unwrap();
+		let full_description = full_description.replace(" [sic]", "");
 		let mut split_description = full_description.splitn(2, ". ");
 		let mut skill_type = split_description.next().unwrap().to_string();
 		let mut is_elite = false;
