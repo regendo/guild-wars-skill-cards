@@ -161,7 +161,7 @@ impl TryFrom<ElementRef<'_>> for Skill {
 		let is_pve_only = (attribute.is_some() && attribute.clone().unwrap().ends_with(" rank"))
 			|| [
 				"Signet of Capture",
-				"\"Together as One!\"",
+				"\"Together as one!\"",
 				"Heroic Refrain",
 				"Judgment Strike",
 				"Over the Limit",
