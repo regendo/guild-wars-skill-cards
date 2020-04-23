@@ -7,7 +7,7 @@ use std::fmt;
 mod helpers {
 	use super::*;
 
-	pub fn determine_profession(row: ElementRef) -> Option<Profession> {
+	pub fn determine_profession(row: ElementRef) -> Profession {
 		let style = row.value().attr("style").unwrap();
 		let re = Regex::new(r"background: (#[0-9A-F]{6})").unwrap();
 		let color = re
@@ -17,7 +17,7 @@ mod helpers {
 			.get(1)
 			.unwrap()
 			.as_str();
-		Profession::from_table_background_color(color)
+		Profession::from_table_background_color(color).expect("Unknown profession!")
 	}
 
 	pub fn determine_icon_url(col: ElementRef) -> String {
@@ -36,7 +36,7 @@ mod helpers {
 pub struct Skill {
 	icon_url: String,
 	name: String,
-	profession: Option<Profession>,
+	profession: Profession,
 	attribute: Option<String>,
 	skill_type: String,
 	description: String,
@@ -94,27 +94,24 @@ impl TryFrom<ElementRef<'_>> for Skill {
 		let mut cost_upkeep = None;
 		let specific_col = cols.next();
 		match profession {
-			Some(Profession::Necromancer) | Some(Profession::Ritualist) => {
+			Profession::Necromancer | Profession::Ritualist => {
 				cost_sacrifice = specific_col.map(sacrifice_value).unwrap();
 			}
-			Some(Profession::Warrior)
-			| Some(Profession::Paragon)
-			| Some(Profession::Dervish)
-			| None => {
-				// Norn and Deldrimor skills without a profession have adrenaline costs
+			Profession::Warrior | Profession::Paragon | Profession::Dervish | Profession::Common => {
+				// Norn and Deldrimor Common skills have adrenaline costs
 				cost_adrenaline = specific_col.map(adrenaline_value).unwrap();
 			}
-			Some(Profession::Elementalist) => {
+			Profession::Elementalist => {
 				if name == "Over the Limit" {
 					cost_upkeep = specific_col.map(upkeep_value).unwrap();
 				} else {
 					cost_overcast = specific_col.map(overcast_value).unwrap();
 				}
 			}
-			Some(Profession::Monk) | Some(Profession::Assassin) => {
+			Profession::Monk | Profession::Assassin => {
 				cost_upkeep = specific_col.map(upkeep_value).unwrap();
 			}
-			Some(Profession::Mesmer) | Some(Profession::Ranger) => (),
+			Profession::Mesmer | Profession::Ranger => (),
 		}
 
 		let cost_energy: Option<u8> = cols.next().map(numerical_row_value).unwrap();
@@ -184,6 +181,9 @@ fn innerText(el: ElementRef) -> String {
 fn numerical_row_value(el: ElementRef) -> Option<u8> {
 	let select_span = Selector::parse("span").unwrap();
 	let text: String = el.select(&select_span).next().map(innerText).unwrap();
+	if text == "morale boost" {
+		return None;
+	}
 	match text.parse::<u8>().unwrap() {
 		n if n == 0 => None,
 		n => Some(n),
@@ -255,6 +255,8 @@ pub enum Profession {
 	Ritualist,
 	Paragon,
 	Dervish,
+	// no real profession, but we'll allow it to make things easier
+	Common,
 }
 impl Profession {
 	fn from_table_background_color(color: &str) -> Option<Self> {
@@ -269,6 +271,7 @@ impl Profession {
 			"#DDFFFF" => Some(Self::Ritualist),
 			"#FFEECC" => Some(Self::Paragon),
 			"#EEEEFF" => Some(Self::Dervish),
+			"#EEEEEE" => Some(Self::Common),
 			_ => None,
 		}
 	}
@@ -284,6 +287,7 @@ impl Profession {
 			Self::Ritualist,
 			Self::Paragon,
 			Self::Dervish,
+			Self::Common,
 		]
 		.iter()
 		.copied()
@@ -302,6 +306,7 @@ impl fmt::Display for Profession {
 			Self::Ritualist => "Ritualist",
 			Self::Paragon => "Paragon",
 			Self::Dervish => "Dervish",
+			Self::Common => "Common",
 		};
 		write!(f, "{}", name)
 	}
