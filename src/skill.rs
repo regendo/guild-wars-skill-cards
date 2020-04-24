@@ -85,6 +85,7 @@ impl Skill {
 	pub fn is_pvp_variant(&self) -> bool {
 		match self.split_by_game_mode {
 			Some(GameMode::PvP) => true,
+			Some(GameMode::Codex) => true,
 			_ => false,
 		}
 	}
@@ -111,7 +112,10 @@ impl TryFrom<ElementRef<'_>> for Skill {
 		if name.ends_with(" (PvP)") {
 			split_by_game_mode = Some(GameMode::PvP);
 			name = name.trim_end_matches(" (PvP)").to_owned();
-			// TODO: cannot detect PvE versions of game mode split skills
+		}
+		if name.ends_with(" (Codex)") {
+			split_by_game_mode = Some(GameMode::Codex);
+			name = name.trim_end_matches(" (Codex)").to_owned();
 		}
 
 		let full_description: String = cols.next().map(innerText).unwrap();
@@ -303,6 +307,7 @@ fn sacrifice_value(el: ElementRef) -> Option<u8> {
 pub enum GameMode {
 	PvE,
 	PvP,
+	Codex,
 }
 
 #[derive(Copy, Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]

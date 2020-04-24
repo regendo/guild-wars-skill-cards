@@ -18,7 +18,9 @@ fn touch_up_skills(mut skills: Vec<Skill>) -> Vec<Skill> {
 	let pvp_skill_names: Vec<String> = skills
 		.iter()
 		.filter_map(|s| {
-			if s.is_pvp_variant() {
+			if s.is_pvp_variant() && s.name != "Charm Animal" {
+				// the regular Charm Animal is usable in both PvE and PvP, so it'd
+				// be a mistake to mark it PvE-only just because of the Codex variant
 				Some(s.name.clone())
 			} else {
 				None
