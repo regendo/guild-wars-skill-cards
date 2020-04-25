@@ -4,8 +4,10 @@
 		"Elementalist",
 		"Kurzick",
 		"Norn",
+		"imageproc",
 		"luxon",
 		"reqwest",
+		"rusttype",
 		"splitn",
 		"thead"
 	]

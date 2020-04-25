@@ -19,7 +19,9 @@ pub fn generate_card(skill: &skill::Skill) {
 	draw_type_line(&mut writable_card, &*skill.type_line(), &font);
 	draw_description(&mut writable_card, &*skill.description, &font);
 
-	writable_card.save("Shadow_Form.png").unwrap();
+	writable_card
+		.save(format!("cards/{}.png", skill.name))
+		.unwrap();
 }
 
 fn add_profession_icon(

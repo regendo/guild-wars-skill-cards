@@ -7,6 +7,8 @@ use std::fs;
 mod skill;
 use skill::{GameMode, Profession, Skill};
 
+mod card;
+
 fn is_allegiance_rank(skill: &Skill) -> bool {
 	match skill.attribute {
 		Some(ref attr) if attr.starts_with("Allegiance") => true,
@@ -82,18 +84,33 @@ fn parse_skills(raw_html: &str) -> Vec<Skill> {
 }
 
 fn main() {
-	fs::DirBuilder::new()
-		.recursive(true)
+	let mut dir_builder = fs::DirBuilder::new();
+	dir_builder.recursive(true);
+	dir_builder
 		.create("cache")
 		.expect("Couldn't create cache directory!");
-	for profession in Profession::iter() {
-		build_skill_cache(profession);
+	dir_builder
+		.create("cards")
+		.expect("Couldn't create cache directory!");
+
+	// // for profession in Profession::iter() {
+	// // 	build_skill_cache(profession);
+	// // }
+	let skills: Vec<Skill> = Profession::iter()
+		.flat_map(|profession| load_skill_cache(profession))
+		.filter(|s: &Skill| !s.is_pvp_variant())
+		.filter(|s: &Skill| {
+			[
+				"Shadow Form",
+				"\"Go for the Eyes!\"",
+				"Over the Limit",
+				"Shockwave",
+				"Hundred Blades",
+			]
+			.contains(&&*s.name)
+		})
+		.collect();
+	for skill in skills {
+		card::generate_card(&skill);
 	}
-	// let skills: Vec<Skill> = Profession::iter()
-	// 	.flat_map(|profession| load_skill_cache(profession))
-	// 	.collect();
-	// println!("{} skills loaded.", skills.len());
-	// for skill in skills.iter().filter(|s| !s.is_pvp_variant()) {
-	// 	println!("{}: {}", skill.type_line(), skill.name);
-	// }
 }
