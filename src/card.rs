@@ -30,9 +30,9 @@ fn add_profession_icon(
 	background: &raster::Image,
 	_profession: skill::Profession,
 ) -> raster::Image {
-	// TODO Make profession-specific
 	// TODO Cache profession icon
-	let mut profession_icon = raster::open("cache/images/Assassin-tango-icon-200.png").unwrap();
+	let path = format!("cache/images/{}-tango-icon-200.png", _profession);
+	let mut profession_icon = raster::open(&path).unwrap();
 	editor::resize(&mut profession_icon, 110, 110, ResizeMode::Exact).unwrap();
 
 	editor::blend(
