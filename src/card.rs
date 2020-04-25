@@ -1,4 +1,4 @@
-use image::{DynamicImage, ImageBuffer, Rgba};
+use image::{ImageBuffer, Rgba};
 use imageproc::drawing::draw_text_mut;
 use raster::{editor, BlendMode, PositionMode, ResizeMode};
 use rusttype::{Font, FontCollection, Point, Scale};
@@ -58,38 +58,53 @@ pub fn generate_example_card() {
 	let type_line = "Elite Assassin Enchantment Spell (Shadow Arts)";
 	let description = "(5...18...21 seconds.) Enemy spells cannot target you. Gain 5 damage reduction for each Assassin enchantment on you. You cannot deal more than 5...21...25 damage with a single skill or attack.";
 
-	let font_scale_title = 25.0;
-	let font_scale_description = 13.0;
+	draw_title(&mut text_image, card_name, &font);
+	draw_type_line(&mut text_image, type_line, &font);
+	draw_description(&mut text_image, description, &font);
 
+	text_image.save("Shadow_Form.png").unwrap();
+}
+
+fn draw_title(image: &mut ImageBuffer<Rgba<u8>, Vec<u8>>, text: &str, font: &Font) {
+	let font_scale_title = 25.0;
 	let title_x_start = 35;
 	let title_y = 275;
-	let type_line_x_start = 25;
-	let type_line_y = 315;
-	let description_x_start = type_line_x_start;
-	let description_y = 340;
 
 	draw_text_mut(
-		&mut text_image,
+		image,
 		Rgba([0x0_u8, 0x0_u8, 0x0_u8, 0xFF_u8]),
 		title_x_start,
 		title_y,
 		Scale::uniform(font_scale_title),
-		&font,
-		card_name,
+		font,
+		text,
 	);
+}
+
+fn draw_type_line(image: &mut ImageBuffer<Rgba<u8>, Vec<u8>>, text: &str, font: &Font) {
+	let font_scale_description = 13.0;
+	let type_line_x_start = 25;
+	let type_line_y = 315;
+
 	draw_text_mut(
-		&mut text_image,
+		image,
 		Rgba([0x0_u8, 0x0_u8, 0x0_u8, 0xFF_u8]),
 		type_line_x_start,
 		type_line_y,
 		Scale::uniform(font_scale_description),
-		&font,
-		type_line,
+		font,
+		text,
 	);
+}
+
+fn draw_description(image: &mut ImageBuffer<Rgba<u8>, Vec<u8>>, text: &str, font: &Font) {
+	let description_x_start = 25;
+	let font_scale_description = 13.0;
+	let description_y = 340;
 
 	let description_lines = split_into_lines(
-		description,
-		&font,
+		text,
+		font,
 		(300 - description_x_start * 2) as f32,
 		Scale::uniform(font_scale_description),
 	);
@@ -97,17 +112,15 @@ pub fn generate_example_card() {
 	let line_height = 12;
 	for (idx, line) in description_lines.iter().enumerate() {
 		draw_text_mut(
-			&mut text_image,
+			image,
 			Rgba([0x0_u8, 0x0_u8, 0x0_u8, 0xFF_u8]),
 			description_x_start,
 			(description_y + idx * line_height) as u32,
 			Scale::uniform(font_scale_description),
-			&font,
+			font,
 			line,
 		);
 	}
-
-	text_image.save("Shadow_Form.png").unwrap();
 }
 
 fn split_into_lines<'a>(text: &'a str, font: &Font, line_width: f32, scale: Scale) -> Vec<&'a str> {
