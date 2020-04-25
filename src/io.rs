@@ -3,7 +3,7 @@ use reqwest;
 use scraper::{Html, Selector};
 use serde_json;
 use std::convert::TryFrom;
-use std::fs;
+use std::{fs, thread, time};
 
 fn is_allegiance_rank(skill: &Skill) -> bool {
 	match skill.attribute {
@@ -95,4 +95,24 @@ pub fn create_directories() {
 	dir_builder
 		.create("cards")
 		.expect("Couldn't create cards directory!");
+}
+
+pub fn build_image_cache(skills: &[Skill]) {
+	let client = reqwest::blocking::Client::new();
+	let delay = time::Duration::from_secs(1);
+	for skill in skills {
+		if fs::metadata(skill.icon_path()).is_ok() {
+			// Already exists
+			// Manually instead of filter because a few skills will have the same icon
+			continue;
+		}
+		let url = &format!("https://wiki.guildwars.com{}", skill.icon_url);
+		let response = client
+			.get(url)
+			.send()
+			.expect(&format!("Couldn't send request to {}.", url));
+		let path = skill.icon_path();
+		fs::write(&path, response.bytes().unwrap()).expect(&format!("Couldn't write to {}.", &path));
+		thread::sleep(delay);
+	}
 }

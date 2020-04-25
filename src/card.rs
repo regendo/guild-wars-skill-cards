@@ -216,14 +216,9 @@ fn gen_background(skill: &skill::Skill) -> raster::Image {
 	}
 }
 
-fn add_skill_image(background: &raster::Image, _skill: &skill::Skill) -> raster::Image {
-	// TODO: use the actual skill's icon
+fn add_skill_image(background: &raster::Image, skill: &skill::Skill) -> raster::Image {
 	// no need to cache this one, only few skills re-use icons
-	let mut skill_image = if _skill.is_elite {
-		raster::open("cache/images/Shadow_Form.jpg").unwrap()
-	} else {
-		raster::open("cache/images/_Go_for_the_Eyes!_.jpg").unwrap()
-	};
+	let mut skill_image = raster::open(&skill.icon_path()).unwrap();
 	editor::resize(&mut skill_image, 300, 300, ResizeMode::Exact).unwrap();
 
 	editor::blend(
