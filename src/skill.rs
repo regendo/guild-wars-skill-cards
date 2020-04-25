@@ -35,7 +35,7 @@ mod helpers {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Skill {
-	icon_url: String,
+	pub icon_url: String,
 	pub name: String,
 	pub profession: Profession,
 	pub attribute: Option<String>,
@@ -88,6 +88,16 @@ impl Skill {
 			Some(GameMode::Codex) => true,
 			_ => false,
 		}
+	}
+
+	pub fn icon_path(&self) -> String {
+		// I don't think we need to treat PvE/PvP split skills any differently here.
+		let allegiance = match &self.attribute {
+			Some(k) if k.starts_with("Kurzick") => "-Kurzick",
+			Some(l) if l.starts_with("Luxon") => "-Luxon",
+			_ => "",
+		};
+		format!("cache/images/{}{}.jpg", self.name, allegiance)
 	}
 }
 
