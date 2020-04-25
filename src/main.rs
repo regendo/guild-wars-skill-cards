@@ -62,14 +62,14 @@ fn build_skill_cache(profession: Profession) {
 		.text()
 		.expect(&format!("Failed to get response text from {}", url));
 	let skills = touch_up_skills(parse_skills(&raw_html));
-	let path = &format!("cache/{}.json", profession);
+	let path = &format!("cache/data/{}.json", profession);
 
 	fs::write(path, serde_json::to_string(&skills).unwrap())
 		.expect(&format!("Couldn't write to file {}", path));
 }
 
 fn load_skill_cache(profession: Profession) -> Vec<Skill> {
-	let path = format!("cache/{}.json", profession);
+	let path = format!("cache/data/{}.json", profession);
 	let raw_skills = fs::read_to_string(path).expect("Couldn't read from file!");
 	let skills: Vec<Skill> = serde_json::from_str(&raw_skills).unwrap();
 	return skills;
@@ -83,19 +83,26 @@ fn parse_skills(raw_html: &str) -> Vec<Skill> {
 	skills
 }
 
-fn main() {
+fn create_directories() {
 	let mut dir_builder = fs::DirBuilder::new();
 	dir_builder.recursive(true);
 	dir_builder
-		.create("cache")
-		.expect("Couldn't create cache directory!");
+		.create("cache/data")
+		.expect("Couldn't create image directory!");
+	dir_builder
+		.create("cache/images")
+		.expect("Couldn't create data directory!");
 	dir_builder
 		.create("cards")
-		.expect("Couldn't create cache directory!");
+		.expect("Couldn't create cards directory!");
+}
 
-	// // for profession in Profession::iter() {
-	// // 	build_skill_cache(profession);
-	// // }
+fn main() {
+	create_directories();
+
+	// for profession in Profession::iter() {
+	// 	build_skill_cache(profession);
+	// }
 	let skills: Vec<Skill> = Profession::iter()
 		.flat_map(|profession| load_skill_cache(profession))
 		.filter(|s: &Skill| !s.is_pvp_variant())

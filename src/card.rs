@@ -30,9 +30,9 @@ fn add_profession_icon(
 	background: &raster::Image,
 	_profession: skill::Profession,
 ) -> raster::Image {
-	// TODO Cache profession icon
+	// TODO Cache profession icon in memory, we'll use it a lot
 	let path = format!(
-		"cache/images/{}-tango-icon-200.png",
+		"assets/icons/{}-tango-icon-200.png",
 		if _profession == skill::Profession::Common {
 			"Any".to_owned()
 		} else {
@@ -55,8 +55,8 @@ fn add_profession_icon(
 }
 
 fn add_textboxes(card: &raster::Image) -> raster::Image {
-	// TODO cache textbox image
-	let textboxes = raster::open("design/exports/Textboxes.png").unwrap();
+	// TODO cache textbox image in memory, we'll use it a lot
+	let textboxes = raster::open("assets/card_frames/Textboxes.png").unwrap();
 
 	editor::blend(
 		card,
