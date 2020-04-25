@@ -99,6 +99,16 @@ impl Skill {
 		};
 		format!("cache/images/{}{}.jpg", self.name, allegiance)
 	}
+
+	pub fn card_path(&self) -> String {
+		// I don't think we need to treat PvE/PvP split skills any differently here.
+		let allegiance = match &self.attribute {
+			Some(k) if k.starts_with("Kurzick") => "-Kurzick",
+			Some(l) if l.starts_with("Luxon") => "-Luxon",
+			_ => "",
+		};
+		format!("cards/{}{}.jpg", self.name, allegiance)
+	}
 }
 
 impl TryFrom<ElementRef<'_>> for Skill {

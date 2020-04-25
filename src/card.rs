@@ -3,8 +3,15 @@ use image::{ImageBuffer, Rgba};
 use imageproc::drawing::draw_text_mut;
 use raster::{editor, BlendMode, PositionMode, ResizeMode};
 use rusttype::{Font, FontCollection, Point, Scale};
+use std::fs;
 
 pub fn generate_card(skill: &skill::Skill) {
+	let path = skill.card_path();
+	if fs::metadata(&path).is_ok() {
+		// Already exist
+		return;
+	}
+
 	let background = gen_background(skill);
 
 	let card = add_skill_image(&background, skill);
@@ -21,9 +28,7 @@ pub fn generate_card(skill: &skill::Skill) {
 	draw_type_line(&mut writable_card, &*skill.type_line(), &font);
 	draw_description(&mut writable_card, &*skill.description, &font);
 
-	writable_card
-		.save(format!("cards/{}.png", skill.name))
-		.unwrap();
+	writable_card.save(&path).unwrap();
 }
 
 fn add_profession_icon(

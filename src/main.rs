@@ -13,21 +13,9 @@ fn main() {
 	let skills: Vec<Skill> = Profession::iter()
 		.flat_map(|profession| io::load_skill_cache(profession))
 		.filter(|s: &Skill| !s.is_pvp_variant())
-		.filter(|s: &Skill| {
-			[
-				"Shadow Form",
-				"\"Go for the Eyes!\"",
-				"Over the Limit",
-				"Shockwave",
-				"Hundred Blades",
-				"Ebon Battle Standard of Honor",
-				"\"Save Yourselves!\"",
-			]
-			.contains(&&*s.name)
-		})
 		.collect();
+	io::build_image_cache(&skills);
 	for skill in skills {
-		// card::generate_card(&skill);
-		println!("{}", skill.icon_path());
+		card::generate_card(&skill);
 	}
 }
