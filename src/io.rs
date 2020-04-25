@@ -49,6 +49,11 @@ fn touch_up_skills(mut skills: Vec<Skill>) -> Vec<Skill> {
 }
 
 pub fn build_data_cache(profession: Profession) {
+	let path = &format!("cache/data/{}.json", profession);
+	if fs::metadata(path).is_ok() {
+		// already exists
+		return;
+	}
 	let url = format!(
 		"https://wiki.guildwars.com/wiki/List_of_{}_skills",
 		profession.to_string().to_lowercase()
@@ -58,7 +63,6 @@ pub fn build_data_cache(profession: Profession) {
 		.text()
 		.expect(&format!("Failed to get response text from {}", url));
 	let skills = touch_up_skills(parse_skills(&raw_html));
-	let path = &format!("cache/data/{}.json", profession);
 
 	fs::write(path, serde_json::to_string(&skills).unwrap())
 		.expect(&format!("Couldn't write to file {}", path));

@@ -6,9 +6,10 @@ use skill::{Profession, Skill};
 fn main() {
 	io::create_directories();
 
-	// for profession in Profession::iter() {
-	// 	io::build_data_cache(profession);
-	// }
+	for profession in Profession::iter() {
+		io::build_data_cache(profession);
+	}
+
 	let skills: Vec<Skill> = Profession::iter()
 		.flat_map(|profession| io::load_skill_cache(profession))
 		.filter(|s: &Skill| !s.is_pvp_variant())
