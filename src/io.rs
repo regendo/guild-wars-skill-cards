@@ -117,7 +117,7 @@ pub fn build_image_cache(skills: &[Skill]) {
 		if path.ends_with("-Kurzick.jpg") || path.ends_with("-Luxon.jpg") {
 			let image = image::load_from_memory(&*data).unwrap();
 			let kurzick = image.crop_imm(0, 0, 64, 64);
-			let luxon = image.crop_imm(65, 65, 64, 64);
+			let luxon = image.crop_imm(0, 64, 64, 64);
 			let path = path
 				.trim_end_matches("-Kurzick.jpg")
 				.trim_end_matches("-Luxon.jpg");
