@@ -14,6 +14,8 @@ pub fn generate_card(skill: &skill::Skill) {
 	let mut writable_card =
 		ImageBuffer::from_raw(card.width as u32, card.height as u32, card.bytes).unwrap();
 
+	// TODO Draw energy cost, cast time, etc.
+
 	let font = load_font();
 	draw_title(&mut writable_card, &*skill.name, &font);
 	draw_type_line(&mut writable_card, &*skill.type_line(), &font);
@@ -99,11 +101,12 @@ fn draw_description(image: &mut ImageBuffer<Rgba<u8>, Vec<u8>>, text: &str, font
 	let description_x_start = 25;
 	let font_scale_description = 13.0;
 	let description_y = 340;
+	let padding_right = 10;
 
 	let description_lines = split_into_lines(
 		text,
 		font,
-		(300 - description_x_start * 2) as f32,
+		(300 - description_x_start * 2 - padding_right) as f32,
 		Scale::uniform(font_scale_description),
 	);
 
@@ -176,7 +179,11 @@ fn gen_background(skill: &skill::Skill) -> raster::Image {
 fn add_skill_image(background: &raster::Image, _skill: &skill::Skill) -> raster::Image {
 	// TODO: use the actual skill's icon
 	// no need to cache this one, only few skills re-use icons
-	let mut skill_image = raster::open("cache/images/Shadow_Form.jpg").unwrap();
+	let mut skill_image = if _skill.is_elite {
+		raster::open("cache/images/Shadow_Form.jpg").unwrap()
+	} else {
+		raster::open("cache/images/_Go_for_the_Eyes!_.jpg").unwrap()
+	};
 	editor::resize(&mut skill_image, 300, 300, ResizeMode::Exact).unwrap();
 
 	editor::blend(
