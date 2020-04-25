@@ -1,31 +1,54 @@
+use crate::skill;
 use image::{ImageBuffer, Rgba};
 use imageproc::drawing::draw_text_mut;
 use raster::{editor, BlendMode, PositionMode, ResizeMode};
 use rusttype::{Font, FontCollection, Point, Scale};
 
-pub fn generate_example_card() {
-	let black_background = raster::open("design/exports/Background.png").unwrap();
+pub fn generate_card(skill: &skill::Skill) {
+	let background = gen_background(skill);
 
-	let elite_background = raster::open("design/exports/Elite Background.png").unwrap();
-	let mut profession = raster::open("cache/images/Assassin-tango-icon-200.png").unwrap();
-	let textboxes = raster::open("design/exports/Textboxes.png").unwrap();
-	let mut skill_icon = raster::open("cache/images/Shadow_Form.jpg").unwrap();
+	let card = add_skill_image(&background, skill);
+	let card = add_textboxes(&card);
+	let card = add_profession_icon(&card, skill.profession);
 
-	editor::resize(&mut skill_icon, 300, 300, ResizeMode::Exact);
-	editor::resize(&mut profession, 110, 110, ResizeMode::Exact);
-	let card = editor::blend(
-		&elite_background,
-		&skill_icon,
+	let mut writable_card =
+		ImageBuffer::from_raw(card.width as u32, card.height as u32, card.bytes).unwrap();
+
+	let font = load_font();
+	draw_title(&mut writable_card, &*skill.name, &font);
+	draw_type_line(&mut writable_card, &*skill.type_line(), &font);
+	draw_description(&mut writable_card, &*skill.description, &font);
+
+	writable_card.save("Shadow_Form.png").unwrap();
+}
+
+fn add_profession_icon(
+	background: &raster::Image,
+	_profession: skill::Profession,
+) -> raster::Image {
+	// TODO Make profession-specific
+	// TODO Cache profession icon
+	let mut profession_icon = raster::open("cache/images/Assassin-tango-icon-200.png").unwrap();
+	editor::resize(&mut profession_icon, 110, 110, ResizeMode::Exact).unwrap();
+
+	editor::blend(
+		background,
+		&profession_icon,
 		BlendMode::Normal,
-		1.0,
-		PositionMode::TopLeft,
+		0.2,
+		PositionMode::BottomCenter,
 		0,
-		0,
+		-9,
 	)
-	.unwrap();
+	.unwrap()
+}
 
-	let card = editor::blend(
-		&card,
+fn add_textboxes(card: &raster::Image) -> raster::Image {
+	// TODO cache textbox image
+	let textboxes = raster::open("design/exports/Textboxes.png").unwrap();
+
+	editor::blend(
+		card,
 		&textboxes,
 		BlendMode::Normal,
 		1.0,
@@ -33,39 +56,11 @@ pub fn generate_example_card() {
 		0,
 		0,
 	)
-	.unwrap();
-
-	let mut card = editor::blend(
-		&card,
-		&profession,
-		BlendMode::Normal,
-		0.2,
-		PositionMode::BottomCenter,
-		0,
-		-9,
-	)
-	.unwrap();
-
-	let font_data = Vec::from(include_bytes!("../Roboto-Regular.ttf") as &[u8]);
-	let font: Font = FontCollection::from_bytes(&font_data)
-		.unwrap()
-		.into_font()
-		.unwrap();
-
-	let card_name = "Shadow Form";
-	let mut text_image =
-		ImageBuffer::from_raw(card.width as u32, card.height as u32, card.bytes).unwrap();
-	let type_line = "Elite Assassin Enchantment Spell (Shadow Arts)";
-	let description = "(5...18...21 seconds.) Enemy spells cannot target you. Gain 5 damage reduction for each Assassin enchantment on you. You cannot deal more than 5...21...25 damage with a single skill or attack.";
-
-	draw_title(&mut text_image, card_name, &font);
-	draw_type_line(&mut text_image, type_line, &font);
-	draw_description(&mut text_image, description, &font);
-
-	text_image.save("Shadow_Form.png").unwrap();
+	.unwrap()
 }
 
 fn draw_title(image: &mut ImageBuffer<Rgba<u8>, Vec<u8>>, text: &str, font: &Font) {
+	// TODO scale font for extra long titles
 	let font_scale_title = 25.0;
 	let title_x_start = 35;
 	let title_y = 275;
@@ -82,6 +77,7 @@ fn draw_title(image: &mut ImageBuffer<Rgba<u8>, Vec<u8>>, text: &str, font: &Fon
 }
 
 fn draw_type_line(image: &mut ImageBuffer<Rgba<u8>, Vec<u8>>, text: &str, font: &Font) {
+	// TODO scale font for extra long type lines
 	let font_scale_description = 13.0;
 	let type_line_x_start = 25;
 	let type_line_y = 315;
@@ -151,4 +147,40 @@ fn split_into_lines<'a>(text: &'a str, font: &Font, line_width: f32, scale: Scal
 	}
 
 	lines
+}
+
+fn load_font() -> Font<'static> {
+	let font_data = include_bytes!("../Roboto-Regular.ttf") as &'static [u8];
+	let font: Font<'static> = FontCollection::from_bytes(font_data)
+		.unwrap()
+		.into_font()
+		.unwrap();
+
+	font
+}
+
+fn gen_background(skill: &skill::Skill) -> raster::Image {
+	if skill.is_elite {
+		raster::open("design/exports/Elite Background.png").unwrap()
+	} else {
+		raster::open("design/exports/Background.png").unwrap()
+	}
+}
+
+fn add_skill_image(background: &raster::Image, _skill: &skill::Skill) -> raster::Image {
+	// TODO: use the actual skill's icon
+	// no need to cache this one, only few skills re-use icons
+	let mut skill_image = raster::open("cache/images/Shadow_Form.jpg").unwrap();
+	editor::resize(&mut skill_image, 300, 300, ResizeMode::Exact).unwrap();
+
+	editor::blend(
+		&background,
+		&skill_image,
+		BlendMode::Normal,
+		1.0,
+		PositionMode::TopLeft,
+		0,
+		0,
+	)
+	.unwrap()
 }
