@@ -1,4 +1,5 @@
 use crate::skill::{GameMode, Profession, Skill};
+use image;
 use reqwest;
 use scraper::{Html, Selector};
 use serde_json;
@@ -112,7 +113,23 @@ pub fn build_image_cache(skills: &[Skill]) {
 			.send()
 			.expect(&format!("Couldn't send request to {}.", url));
 		let path = skill.icon_path();
-		fs::write(&path, response.bytes().unwrap()).expect(&format!("Couldn't write to {}.", &path));
+		let data = response.bytes().unwrap();
+		if path.ends_with("-Kurzick.jpg") || path.ends_with("-Luxon.jpg") {
+			let image = image::load_from_memory(&*data).unwrap();
+			let kurzick = image.crop_imm(0, 0, 64, 64);
+			let luxon = image.crop_imm(65, 65, 64, 64);
+			let path = path
+				.trim_end_matches("-Kurzick.jpg")
+				.trim_end_matches("-Luxon.jpg");
+			kurzick
+				.save(format!("{}-Kurzick.jpg", path))
+				.expect(&format!("Couldn't write to {}-Kurzick.jpg.", &path));
+			luxon
+				.save(format!("{}-Luxon.jpg", path))
+				.expect(&format!("Couldn't write to {}-Luxon.jpg.", &path));
+		} else {
+			fs::write(&path, data).expect(&format!("Couldn't write to {}.", &path));
+		}
 		thread::sleep(delay);
 	}
 }
