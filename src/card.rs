@@ -56,25 +56,19 @@ pub fn generate_example_card() {
 	let mut text_image =
 		ImageBuffer::from_raw(card.width as u32, card.height as u32, card.bytes).unwrap();
 	let type_line = "Elite Assassin Enchantment Spell (Shadow Arts)";
-	draw_text_mut(
-		&mut text_image,
-		Rgba([0x0_u8, 0x0_u8, 0x0_u8, 0xFF_u8]),
-		35,
-		275,
-		Scale::uniform(25.0),
-		&font,
-		card_name,
-	);
-	draw_text_mut(
-		&mut text_image,
-		Rgba([0x0_u8, 0x0_u8, 0x0_u8, 0xFF_u8]),
-		25,
-		315,
-		Scale::uniform(13.0),
-		&font,
-		type_line,
-	);
-	text_image.save("text.png").unwrap();
 
-	// raster::save(&card, "card.png").unwrap();
+	let mut layout = font.layout(
+		description,
+		Scale::uniform(font_scale_description),
+		Point {
+			x: description_x_start as f32,
+			y: description_y as f32,
+		},
+	);
+	let line_len = layout
+		.filter(|g| g.position().x <= (300 - description_x_start) as f32)
+		.count();
+	println!("{}", &description[0..line_len]);
+
+	text_image.save("Shadow_Form.png").unwrap();
 }
