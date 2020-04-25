@@ -31,7 +31,14 @@ fn add_profession_icon(
 	_profession: skill::Profession,
 ) -> raster::Image {
 	// TODO Cache profession icon
-	let path = format!("cache/images/{}-tango-icon-200.png", _profession);
+	let path = format!(
+		"cache/images/{}-tango-icon-200.png",
+		if _profession == skill::Profession::Common {
+			"Any".to_owned()
+		} else {
+			_profession.to_string()
+		}
+	);
 	let mut profession_icon = raster::open(&path).unwrap();
 	editor::resize(&mut profession_icon, 110, 110, ResizeMode::Exact).unwrap();
 

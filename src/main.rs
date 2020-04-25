@@ -106,6 +106,7 @@ fn main() {
 				"Over the Limit",
 				"Shockwave",
 				"Hundred Blades",
+				"Ebon Battle Standard of Honor",
 			]
 			.contains(&&*s.name)
 		})
