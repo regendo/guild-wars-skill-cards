@@ -96,6 +96,9 @@ pub fn create_directories() {
 	dir_builder
 		.create("cards")
 		.expect("Couldn't create cards directory!");
+	dir_builder
+		.create("cards/decks")
+		.expect("Couldn't create decks directory!");
 }
 
 pub fn build_image_cache(skills: &[Skill]) {

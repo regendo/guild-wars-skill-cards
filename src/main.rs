@@ -1,6 +1,7 @@
 mod card;
 mod io;
 mod skill;
+mod tabletop;
 use skill::{Profession, Skill};
 
 fn main() {
@@ -15,7 +16,8 @@ fn main() {
 		.filter(|s: &Skill| !s.is_pvp_variant())
 		.collect();
 	io::build_image_cache(&skills);
-	for skill in skills {
+	for skill in &skills {
 		card::generate_card(&skill);
 	}
+	tabletop::create_tabletop_simulator_decks(&skills);
 }
