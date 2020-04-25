@@ -137,7 +137,11 @@ fn draw_description(image: &mut ImageBuffer<Rgba<u8>, Vec<u8>>, text: &str, font
 		Scale::uniform(font_scale_description),
 	);
 
-	let line_height = 12;
+	let line_height = match description_lines.len() {
+		1..=4 => 15,
+		5 => 14,
+		6 | _ => 13,
+	};
 	for (idx, line) in description_lines.iter().enumerate() {
 		draw_text_mut(
 			image,
