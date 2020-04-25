@@ -71,37 +71,57 @@ fn add_textboxes(card: &raster::Image) -> raster::Image {
 }
 
 fn draw_title(image: &mut ImageBuffer<Rgba<u8>, Vec<u8>>, text: &str, font: &Font) {
-	// TODO scale font for extra long titles
-	let font_scale_title = 25.0;
-	let title_x_start = 35;
-	let title_y = 275;
+	let x_off = 35;
+	let mut y_off: f32 = 275.0;
+	let mut scale = 25.0;
+	let line_width = 300 - 2 * x_off;
+	while !fits_into_line(text, font, Scale::uniform(scale), line_width) {
+		scale -= 0.5;
+		y_off += 0.25;
+	}
 
 	draw_text_mut(
 		image,
 		Rgba([0x0_u8, 0x0_u8, 0x0_u8, 0xFF_u8]),
-		title_x_start,
-		title_y,
-		Scale::uniform(font_scale_title),
+		x_off as u32,
+		y_off.trunc() as u32,
+		Scale::uniform(scale),
 		font,
 		text,
 	);
 }
 
 fn draw_type_line(image: &mut ImageBuffer<Rgba<u8>, Vec<u8>>, text: &str, font: &Font) {
-	// TODO scale font for extra long type lines
-	let font_scale_description = 13.0;
-	let type_line_x_start = 25;
-	let type_line_y = 315;
+	let x_off = 25;
+	let padding_right = 10;
+	let mut y_off: f32 = 315.0;
+	let mut scale = 13.0;
+	let line_width = 300 - 2 * x_off - padding_right;
+	while !fits_into_line(text, font, Scale::uniform(scale), line_width) {
+		scale -= 0.5;
+		y_off += 0.25;
+	}
 
 	draw_text_mut(
 		image,
 		Rgba([0x0_u8, 0x0_u8, 0x0_u8, 0xFF_u8]),
-		type_line_x_start,
-		type_line_y,
-		Scale::uniform(font_scale_description),
+		x_off as u32,
+		y_off.trunc() as u32,
+		Scale::uniform(scale),
 		font,
 		text,
 	);
+}
+
+fn fits_into_line(text: &str, font: &Font, scale: Scale, line_width: i32) -> bool {
+	font
+		.layout(text, scale, Point { x: 0.0, y: 0.0 })
+		.last()
+		.unwrap()
+		.pixel_bounding_box()
+		.unwrap()
+		.max
+		.x <= line_width
 }
 
 fn draw_description(image: &mut ImageBuffer<Rgba<u8>, Vec<u8>>, text: &str, font: &Font) {
