@@ -133,7 +133,7 @@ fn draw_description(image: &mut ImageBuffer<Rgba<u8>, Vec<u8>>, text: &str, font
 	let description_lines = split_into_lines(
 		text,
 		font,
-		(300 - description_x_start * 2 - padding_right) as f32,
+		300 - description_x_start * 2 - padding_right,
 		Scale::uniform(font_scale_description),
 	);
 
@@ -146,7 +146,7 @@ fn draw_description(image: &mut ImageBuffer<Rgba<u8>, Vec<u8>>, text: &str, font
 		draw_text_mut(
 			image,
 			Rgba([0x0_u8, 0x0_u8, 0x0_u8, 0xFF_u8]),
-			description_x_start,
+			description_x_start as u32,
 			(description_y + idx * line_height) as u32,
 			Scale::uniform(font_scale_description),
 			font,
@@ -155,14 +155,23 @@ fn draw_description(image: &mut ImageBuffer<Rgba<u8>, Vec<u8>>, text: &str, font
 	}
 }
 
-fn split_into_lines<'a>(text: &'a str, font: &Font, line_width: f32, scale: Scale) -> Vec<&'a str> {
+fn split_into_lines<'a>(text: &'a str, font: &Font, line_width: i32, scale: Scale) -> Vec<&'a str> {
 	let mut lines = vec![];
 
 	let mut subslice_start = 0;
 	while subslice_start < text.len() {
 		let chars_in_line = font
 			.layout(&text[subslice_start..], scale, Point { x: 0.0, y: 0.0 })
-			.filter(|g| g.position().x <= line_width)
+			.filter(|g| {
+				if let Some(rect) = g.pixel_bounding_box() {
+					// Does the rightmost glyph pixel still fit into the line?
+					rect.max.x <= line_width
+				} else {
+					// Whitespace doesn't have a bounding box.
+					// This is the theoretical leftmost pixel but for whitespace it doesn't matter.
+					g.position().x <= line_width as f32
+				}
+			})
 			.count();
 		if subslice_start + chars_in_line == text.len() {
 			// All done!
