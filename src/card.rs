@@ -160,10 +160,14 @@ fn load_font() -> Font<'static> {
 }
 
 fn gen_background(skill: &skill::Skill) -> raster::Image {
-	if skill.is_elite {
-		raster::open("design/exports/Elite Background.png").unwrap()
-	} else {
-		raster::open("design/exports/Background.png").unwrap()
+	let black = [0x0_u8, 0x0_u8, 0x0_u8, 0xFF_u8];
+	let elite = [0xFC_u8, 0xDF_u8, 0x02_u8, 0xFF_u8];
+	let color = if skill.is_elite { elite } else { black };
+
+	raster::Image {
+		width: 6 * 50,
+		height: 6 * 72,
+		bytes: color.repeat(6 * 6 * 50 * 72),
 	}
 }
 
