@@ -99,6 +99,23 @@ pub enum Resource {
 	Sacrifice(u8),
 }
 
+impl Resource {
+	pub fn text_value(&self) -> String {
+		match self {
+			Resource::Cast(time) => {
+				// TODO
+				time.to_string()
+			}
+			Resource::Upkeep(_) => "-1".to_owned(),
+			Resource::Recharge(value)
+			| Resource::Energy(value)
+			| Resource::Adrenaline(value)
+			| Resource::Overcast(value) => value.to_string(),
+			Resource::Sacrifice(value) => format!("{}%", value),
+		}
+	}
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Skill {
 	pub icon_url: String,
@@ -107,7 +124,7 @@ pub struct Skill {
 	pub attribute: Option<String>,
 	skill_type: String,
 	pub description: String,
-	resources: Vec<Resource>,
+	pub resources: Vec<Resource>,
 	is_quest_reward: bool,
 	campaign: String,
 	pub split_by_game_mode: Option<GameMode>,

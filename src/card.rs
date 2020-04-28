@@ -3,7 +3,7 @@ use image::{ImageBuffer, Rgba};
 use imageproc::drawing::draw_text_mut;
 use raster::{editor, BlendMode, PositionMode, ResizeMode};
 use rusttype::{Font, FontCollection, Point, Scale};
-use std::fs;
+use std::{cmp, fs};
 
 pub fn generate_card(skill: &skill::Skill) {
 	let path = skill.card_path();
@@ -21,12 +21,11 @@ pub fn generate_card(skill: &skill::Skill) {
 	let mut writable_card =
 		ImageBuffer::from_raw(card.width as u32, card.height as u32, card.bytes).unwrap();
 
-	// TODO Draw energy cost, cast time, etc.
-
 	let font = load_font();
 	draw_title(&mut writable_card, &*skill.name, &font);
 	draw_type_line(&mut writable_card, &*skill.type_line(), &font);
 	draw_description(&mut writable_card, &*skill.description, &font);
+	draw_resources(&mut writable_card, &skill.resources, &font);
 
 	writable_card.save(&path).unwrap();
 }
@@ -173,6 +172,43 @@ fn draw_description(image: &mut ImageBuffer<Rgba<u8>, Vec<u8>>, text: &str, font
 			line,
 		);
 	}
+}
+
+fn draw_resources(
+	image: &mut ImageBuffer<Rgba<u8>, Vec<u8>>,
+	resources: &[skill::Resource],
+	font: &Font,
+) {
+	let icon_width = 20;
+	let text_max_width = 12;
+	let padding_inside = 4;
+	let total_resource_width = icon_width + text_max_width + padding_inside;
+	let padding_right = 4;
+	let total_space_needed =
+		total_resource_width * resources.len() + cmp::max(0, resources.len() - 1) * padding_right;
+	let x_start = 300 / 2 - total_space_needed / 2;
+
+	for (idx, res) in resources.iter().enumerate() {
+		let x_off = x_start + idx * total_resource_width + idx * padding_right;
+		draw_resource_text(image, font, res, x_off as u32);
+	}
+}
+
+fn draw_resource_text(
+	image: &mut ImageBuffer<Rgba<u8>, Vec<u8>>,
+	font: &Font,
+	resource: &skill::Resource,
+	pos_x: u32,
+) {
+	draw_text_mut(
+		image,
+		Rgba([0x0_u8, 0x0_u8, 0x0_u8, 0xFF_u8]),
+		pos_x,
+		303,
+		Scale::uniform(13.0),
+		font,
+		&resource.text_value(),
+	);
 }
 
 fn split_into_lines<'a>(text: &'a str, font: &Font, line_width: i32, scale: Scale) -> Vec<&'a str> {
