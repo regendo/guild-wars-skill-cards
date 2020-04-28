@@ -102,10 +102,13 @@ pub enum Resource {
 impl Resource {
 	pub fn text_value(&self) -> String {
 		match self {
-			Resource::Cast(time) => {
-				// TODO
-				time.to_string()
-			}
+			Resource::Cast(time) => match time {
+				0.25 => "¼".to_owned(),
+				0.5 => "½".to_owned(),
+				0.75 => "¾".to_owned(),
+				1.5 => "1½".to_owned(),
+				_ => time.to_string(),
+			},
 			Resource::Upkeep(_) => "-1".to_owned(),
 			Resource::Recharge(value)
 			| Resource::Energy(value)

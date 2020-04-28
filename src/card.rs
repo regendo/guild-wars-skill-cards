@@ -213,17 +213,17 @@ fn draw_resources(
 	font: &Font,
 ) {
 	let icon_width = 20;
-	let text_max_width = 12;
+	let text_assumed_width = 12;
 	let padding_inside = 4;
-	let total_resource_width = icon_width + text_max_width + padding_inside;
+	let total_resource_width = icon_width + text_assumed_width + padding_inside;
 	let padding_right = 4;
 	let total_space_needed =
 		total_resource_width * resources.len() + cmp::max(0, resources.len() - 1) * padding_right;
 	let x_start = 300 / 2 - total_space_needed / 2;
 
 	for (idx, res) in resources.iter().enumerate() {
-		let x_off = x_start + idx * total_resource_width + idx * padding_right;
-		draw_resource_text(image, font, res, x_off as u32);
+		let x_off = x_start + idx * (total_resource_width + padding_right);
+		draw_resource_text(image, font, res, x_off as u32, text_assumed_width as u32);
 	}
 }
 
@@ -231,16 +231,23 @@ fn draw_resource_text(
 	image: &mut ImageBuffer<Rgba<u8>, Vec<u8>>,
 	font: &Font,
 	resource: &skill::Resource,
-	pos_x: u32,
+	x_left_start: u32,
+	max_width: u32,
 ) {
+	let scale = Scale::uniform(13.0);
+	let text = &resource.text_value();
+	let width = calc_line_width(text, font, scale);
+	let x_off = cmp::max(0, width) as u32;
+	let x_pos = x_left_start + max_width - x_off;
+
 	draw_text_mut(
 		image,
 		Rgba([0x0_u8, 0x0_u8, 0x0_u8, 0xFF_u8]),
-		pos_x,
-		303,
-		Scale::uniform(13.0),
+		x_pos,
+		305,
+		scale,
 		font,
-		&resource.text_value(),
+		text,
 	);
 }
 
