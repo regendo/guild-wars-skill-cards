@@ -79,16 +79,17 @@ fn draw_title(image: &mut ImageBuffer<Rgba<u8>, Vec<u8>>, text: &str, font: &Fon
 	let x_off = 35;
 	let mut y_off: f32 = 275.0;
 	let mut scale = 25.0;
-	let line_width = 300 - 2 * x_off;
-	while !fits_into_line(text, font, Scale::uniform(scale), line_width) {
-		scale -= 0.5;
-		y_off += 0.25;
-	}
+	let max_line_width = 300 - 2 * x_off;
+
+	let line_data = fit_line(text, font, scale, max_line_width);
+	y_off += line_data.y_off;
+	scale = line_data.scale;
+	let center = 300 - line_data.len / 2;
 
 	draw_text_mut(
 		image,
 		Rgba([0x0_u8, 0x0_u8, 0x0_u8, 0xFF_u8]),
-		x_off as u32,
+		center as u32,
 		y_off.trunc() as u32,
 		Scale::uniform(scale),
 		font,
@@ -101,11 +102,11 @@ fn draw_type_line(image: &mut ImageBuffer<Rgba<u8>, Vec<u8>>, text: &str, font: 
 	let padding_right = 10;
 	let mut y_off: f32 = 315.0;
 	let mut scale = 13.0;
-	let line_width = 300 - 2 * x_off - padding_right;
-	while !fits_into_line(text, font, Scale::uniform(scale), line_width) {
-		scale -= 0.5;
-		y_off += 0.25;
-	}
+	let max_line_width = 300 - 2 * x_off - padding_right;
+
+	let line_data = fit_line(text, font, scale, max_line_width);
+	y_off += line_data.y_off;
+	scale = line_data.scale;
 
 	draw_text_mut(
 		image,
@@ -118,7 +119,27 @@ fn draw_type_line(image: &mut ImageBuffer<Rgba<u8>, Vec<u8>>, text: &str, font: 
 	);
 }
 
-fn fits_into_line(text: &str, font: &Font, scale: Scale, line_width: i32) -> bool {
+struct LineData {
+	scale: f32,
+	y_off: f32,
+	len: i32,
+}
+
+fn fit_line(text: &str, font: &Font, scale: f32, line_width: i32) -> LineData {
+	let mut scale = scale;
+	let mut y_off = 0.0;
+	let len = loop {
+		let x = calc_line_width(text, font, Scale::uniform(scale));
+		if x <= line_width {
+			break x;
+		}
+		scale -= 0.5;
+		y_off += 0.25;
+	};
+	LineData { scale, y_off, len }
+}
+
+fn calc_line_width(text: &str, font: &Font, scale: Scale) -> i32 {
 	font
 		.layout(text, scale, Point { x: 0.0, y: 0.0 })
 		.last()
@@ -126,7 +147,7 @@ fn fits_into_line(text: &str, font: &Font, scale: Scale, line_width: i32) -> boo
 		.pixel_bounding_box()
 		.unwrap()
 		.max
-		.x <= line_width
+		.x
 }
 
 fn draw_description(image: &mut ImageBuffer<Rgba<u8>, Vec<u8>>, text: &str, font: &Font) {
