@@ -84,12 +84,12 @@ fn draw_title(image: &mut ImageBuffer<Rgba<u8>, Vec<u8>>, text: &str, font: &Fon
 	let line_data = fit_line(text, font, scale, max_line_width);
 	y_off += line_data.y_off;
 	scale = line_data.scale;
-	let center = 300 - line_data.len / 2;
+	let centered_x = 300 / 2 - line_data.len / 2;
 
 	draw_text_mut(
 		image,
 		Rgba([0x0_u8, 0x0_u8, 0x0_u8, 0xFF_u8]),
-		center as u32,
+		centered_x as u32,
 		y_off.trunc() as u32,
 		Scale::uniform(scale),
 		font,
