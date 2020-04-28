@@ -114,6 +114,19 @@ impl Resource {
 			Resource::Sacrifice(value) => format!("{}%", value),
 		}
 	}
+
+	pub fn icon_path(&self) -> String {
+		let name = match self {
+			Resource::Adrenaline(_) => "adrenaline",
+			Resource::Energy(_) => "energy",
+			Resource::Cast(_) => "activation-darker",
+			Resource::Recharge(_) => "recharge-darker",
+			Resource::Sacrifice(_) => "sacrifice",
+			Resource::Upkeep(_) => "upkeep",
+			Resource::Overcast(_) => "overcast",
+		};
+		format!("assets/icons/Tango-{}.png", name)
+	}
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

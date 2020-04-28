@@ -17,6 +17,7 @@ pub fn generate_card(skill: &skill::Skill) {
 	let card = add_skill_image(&background, skill);
 	let card = add_textboxes(&card);
 	let card = add_profession_icon(&card, skill.profession);
+	let card = add_resource_icons(&card, &skill.resources);
 
 	let mut writable_card =
 		ImageBuffer::from_raw(card.width as u32, card.height as u32, card.bytes).unwrap();
@@ -172,6 +173,38 @@ fn draw_description(image: &mut ImageBuffer<Rgba<u8>, Vec<u8>>, text: &str, font
 			line,
 		);
 	}
+}
+
+fn add_resource_icons(card: &raster::Image, resources: &[skill::Resource]) -> raster::Image {
+	let icon_width = 20;
+	let text_max_width = 12;
+	let padding_inside = 4;
+	let total_resource_width = icon_width + text_max_width + padding_inside;
+	let padding_right = 4;
+	let total_space_needed =
+		total_resource_width * resources.len() + cmp::max(0, resources.len() - 1) * padding_right;
+	let x_start = 300 / 2 - total_space_needed / 2;
+	let y_off = 301;
+
+	let mut card = card.to_owned();
+
+	for (idx, res) in resources.iter().enumerate() {
+		let x_off =
+			x_start + idx * (total_resource_width + padding_right) + text_max_width + padding_inside;
+		let icon = raster::open(&res.icon_path()).unwrap();
+		card = editor::blend(
+			&card,
+			&icon,
+			BlendMode::Normal,
+			1.0,
+			PositionMode::TopLeft,
+			x_off as i32,
+			y_off,
+		)
+		.unwrap();
+	}
+
+	card
 }
 
 fn draw_resources(
