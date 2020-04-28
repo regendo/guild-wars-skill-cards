@@ -200,7 +200,7 @@ impl Skill {
 			Some(l) if l.starts_with("Luxon") => "-Luxon",
 			_ => "",
 		};
-		format!("cards/{}{}.jpg", self.name, allegiance)
+		format!("cards/{}{}.png", self.name, allegiance)
 	}
 }
 

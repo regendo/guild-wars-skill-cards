@@ -32,7 +32,7 @@ pub fn create_tabletop_simulator_decks(skills: &[skill::Skill]) {
 			)
 			.unwrap();
 		}
-		raster::save(&deck, &format!("cards/decks/Deck {}.jpg", batch_num)).unwrap();
+		raster::save(&deck, &format!("cards/decks/Deck {}.png", batch_num)).unwrap();
 		batch_num += 1;
 	}
 }
