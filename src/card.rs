@@ -98,11 +98,10 @@ fn draw_title(image: &mut ImageBuffer<Rgba<u8>, Vec<u8>>, text: &str, font: &Fon
 }
 
 fn draw_type_line(image: &mut ImageBuffer<Rgba<u8>, Vec<u8>>, text: &str, font: &Font) {
-	let x_off = 25;
-	let padding_right = 10;
-	let mut y_off: f32 = 315.0;
+	let x_off = 27;
+	let mut y_off: f32 = 324.0;
 	let mut scale = 13.0;
-	let max_line_width = 300 - 2 * x_off - padding_right;
+	let max_line_width = 300 - 2 * x_off;
 
 	let line_data = fit_line(text, font, scale, max_line_width);
 	y_off += line_data.y_off;
@@ -151,17 +150,12 @@ fn calc_line_width(text: &str, font: &Font, scale: Scale) -> i32 {
 }
 
 fn draw_description(image: &mut ImageBuffer<Rgba<u8>, Vec<u8>>, text: &str, font: &Font) {
-	let description_x_start = 25;
-	let font_scale_description = 13.0;
-	let description_y = 340;
-	let padding_right = 10;
+	let x_off = 27;
+	let y_off = 343;
+	let scale = 13.0;
+	let max_line_width = 300 - 2 * x_off;
 
-	let description_lines = split_into_lines(
-		text,
-		font,
-		300 - description_x_start * 2 - padding_right,
-		Scale::uniform(font_scale_description),
-	);
+	let description_lines = split_into_lines(text, font, max_line_width, Scale::uniform(scale));
 
 	let line_height = match description_lines.len() {
 		1..=4 => 15,
@@ -172,9 +166,9 @@ fn draw_description(image: &mut ImageBuffer<Rgba<u8>, Vec<u8>>, text: &str, font
 		draw_text_mut(
 			image,
 			Rgba([0x0_u8, 0x0_u8, 0x0_u8, 0xFF_u8]),
-			description_x_start as u32,
-			(description_y + idx * line_height) as u32,
-			Scale::uniform(font_scale_description),
+			x_off as u32,
+			(y_off + idx * line_height) as u32,
+			Scale::uniform(scale),
 			font,
 			line,
 		);
