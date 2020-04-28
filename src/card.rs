@@ -160,7 +160,7 @@ fn draw_description(image: &mut ImageBuffer<Rgba<u8>, Vec<u8>>, text: &str, font
 	let line_height = match description_lines.len() {
 		1..=4 => 15,
 		5 => 14,
-		6 | _ => 13,
+		6 | _ => 12,
 	};
 	for (idx, line) in description_lines.iter().enumerate() {
 		draw_text_mut(
