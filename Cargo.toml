@@ -1,6 +1,6 @@
 [package]
 name = "guild-wars-skill-cards"
-version = "0.1.0"
+version = "1.0.0"
 authors = ["Stef B <regendo@users.noreply.github.com>"]
 edition = "2018"
 
