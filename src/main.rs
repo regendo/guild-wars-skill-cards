@@ -16,8 +16,10 @@ fn main() {
 		.filter(|s: &Skill| !s.is_pvp_variant())
 		.collect();
 	io::build_image_cache(&skills);
+	io::build_image_cache(&[Skill::hidden()]);
 	for skill in &skills {
 		card::generate_card(&skill);
 	}
+	card::generate_card(&Skill::hidden());
 	tabletop::create_tabletop_simulator_decks(&skills);
 }

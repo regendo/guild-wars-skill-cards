@@ -176,13 +176,16 @@ fn draw_description(image: &mut ImageBuffer<Rgba<u8>, Vec<u8>>, text: &str, font
 }
 
 fn add_resource_icons(card: &raster::Image, resources: &[skill::Resource]) -> raster::Image {
+	if resources.is_empty() {
+		return card.to_owned();
+	}
 	let icon_width = 20;
 	let text_max_width = 12;
 	let padding_inside = 4;
 	let total_resource_width = icon_width + text_max_width + padding_inside;
 	let padding_right = 4;
 	let total_space_needed =
-		total_resource_width * resources.len() + cmp::max(0, resources.len() - 1) * padding_right;
+		total_resource_width * resources.len() + (resources.len() - 1) * padding_right;
 	let x_start = 300 / 2 - total_space_needed / 2;
 	let y_off = 301;
 
@@ -212,13 +215,16 @@ fn draw_resources(
 	resources: &[skill::Resource],
 	font: &Font,
 ) {
+	if resources.is_empty() {
+		return;
+	}
 	let icon_width = 20;
 	let text_assumed_width = 12;
 	let padding_inside = 4;
 	let total_resource_width = icon_width + text_assumed_width + padding_inside;
 	let padding_right = 4;
 	let total_space_needed =
-		total_resource_width * resources.len() + cmp::max(0, resources.len() - 1) * padding_right;
+		total_resource_width * resources.len() + (resources.len() - 1) * padding_right;
 	let x_start = 300 / 2 - total_space_needed / 2;
 
 	for (idx, res) in resources.iter().enumerate() {

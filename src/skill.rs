@@ -202,6 +202,23 @@ impl Skill {
 		};
 		format!("cards/{}{}.png", self.name, allegiance)
 	}
+
+	pub fn hidden() -> Self {
+		Self {
+			name: "Unidentified Skill".to_owned(),
+			icon_url: "/images/7/7b/Blind.jpg".to_owned(),
+			profession: Profession::Common,
+			attribute: Some("???".to_owned()),
+			skill_type: "???".to_owned(),
+			description: "??? ??...??...?? ????, ??????.".to_owned(),
+			is_elite: false,
+			is_pve_only: false,
+			is_quest_reward: false,
+			resources: vec![],
+			campaign: "???".to_owned(),
+			split_by_game_mode: None,
+		}
+	}
 }
 
 impl TryFrom<ElementRef<'_>> for Skill {

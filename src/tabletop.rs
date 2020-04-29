@@ -4,7 +4,7 @@ use raster::{editor, BlendMode, PositionMode};
 pub fn create_tabletop_simulator_decks(skills: &[skill::Skill]) {
 	// Tabletop Simulator wants our cards in batches 10 cards wide, 7 cards high.
 	// Except the bottom right card is a placeholder.
-	// TODO create placeholder card, card background
+	// TODO create card background
 	let mut skills = skills.iter().peekable();
 	let mut batch_num = 1;
 	let base = raster::Image {
@@ -12,6 +12,7 @@ pub fn create_tabletop_simulator_decks(skills: &[skill::Skill]) {
 		height: 432 * 7,
 		bytes: [0xFF_u8, 0xFF_u8, 0xFF_u8, 0xFF_u8].repeat(300 * 10 * 432 * 7),
 	};
+	let hidden_card = raster::open(&skill::Skill::hidden().card_path()).unwrap();
 
 	while skills.peek().is_some() {
 		let mut deck = base.clone();
@@ -32,6 +33,16 @@ pub fn create_tabletop_simulator_decks(skills: &[skill::Skill]) {
 			)
 			.unwrap();
 		}
+		deck = editor::blend(
+			&deck,
+			&hidden_card,
+			BlendMode::Normal,
+			1.0,
+			PositionMode::BottomRight,
+			0,
+			0,
+		)
+		.unwrap();
 		raster::save(&deck, &format!("cards/decks/Deck {}.png", batch_num)).unwrap();
 		batch_num += 1;
 	}
