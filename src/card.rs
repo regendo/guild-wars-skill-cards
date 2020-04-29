@@ -297,7 +297,7 @@ fn split_into_lines<'a>(text: &'a str, font: &Font, line_width: i32, scale: Scal
 }
 
 fn load_font() -> Font<'static> {
-	let font_data = include_bytes!("../Roboto-Regular.ttf") as &'static [u8];
+	let font_data = include_bytes!("../assets/fonts/Roboto-Regular.ttf") as &'static [u8];
 	let font: Font<'static> = FontCollection::from_bytes(font_data)
 		.unwrap()
 		.into_font()
