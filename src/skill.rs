@@ -2,7 +2,7 @@ use regex::{Captures, Regex};
 use scraper::{element_ref::ElementRef, Selector};
 use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
-use std::fmt;
+use std::{fmt, iter};
 use string_builder;
 
 mod helpers {
@@ -31,28 +31,121 @@ mod helpers {
 			.unwrap()
 			.to_string()
 	}
+
+	pub fn determine_resources<'a, I>(
+		cols: &mut I,
+		profession: Profession,
+		skill_name: &str,
+	) -> Vec<Resource>
+	where
+		I: iter::Iterator<Item = ElementRef<'a>>,
+	{
+		let mut res = vec![];
+
+		let specific_col = cols.next();
+		match profession {
+			Profession::Necromancer | Profession::Ritualist => {
+				if let Some(cost) = specific_col.map(sacrifice_value).unwrap() {
+					res.push(Resource::Sacrifice(cost));
+				}
+			}
+			Profession::Warrior | Profession::Paragon | Profession::Dervish | Profession::Common => {
+				// Norn and Deldrimor Common skills have adrenaline costs
+				if let Some(cost) = specific_col.map(adrenaline_value).unwrap() {
+					res.push(Resource::Adrenaline(cost));
+				}
+			}
+			Profession::Elementalist => {
+				if skill_name == "Over the Limit" {
+					if let Some(drain) = specific_col.map(upkeep_value).unwrap() {
+						res.push(Resource::Upkeep(drain));
+					}
+				} else {
+					if let Some(cost) = specific_col.map(overcast_value).unwrap() {
+						res.push(Resource::Overcast(cost));
+					}
+				}
+			}
+			Profession::Monk | Profession::Assassin => {
+				if let Some(drain) = specific_col.map(upkeep_value).unwrap() {
+					res.push(Resource::Upkeep(drain));
+				}
+			}
+			Profession::Mesmer | Profession::Ranger => (),
+		}
+
+		if let Some(cost) = cols.next().map(numerical_row_value).unwrap() {
+			res.push(Resource::Energy(cost));
+		}
+		if let Some(time) = cols.next().map(cast_time_value).unwrap() {
+			res.push(Resource::Cast(time));
+		}
+		if let Some(time) = cols.next().map(numerical_row_value).unwrap() {
+			res.push(Resource::Recharge(time));
+		}
+
+		res
+	}
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+pub enum Resource {
+	Recharge(u8),
+	Cast(f32),
+	Energy(u8),
+	Adrenaline(u8),
+	Overcast(u8),
+	Upkeep(i8),
+	Sacrifice(u8),
+}
+
+impl Resource {
+	pub fn text_value(&self) -> String {
+		match self {
+			Resource::Cast(time) => match time {
+				t if *t == 0.25 => "¼".to_owned(),
+				t if *t == 0.5 => "½".to_owned(),
+				t if *t == 0.75 => "¾".to_owned(),
+				t if *t == 1.5 => "1½".to_owned(),
+				_ => time.to_string(),
+			},
+			Resource::Upkeep(_) => "-1".to_owned(),
+			Resource::Recharge(value)
+			| Resource::Energy(value)
+			| Resource::Adrenaline(value)
+			| Resource::Overcast(value) => value.to_string(),
+			Resource::Sacrifice(value) => format!("{}%", value),
+		}
+	}
+
+	pub fn icon_path(&self) -> String {
+		let name = match self {
+			Resource::Adrenaline(_) => "adrenaline",
+			Resource::Energy(_) => "energy",
+			Resource::Cast(_) => "activation-darker",
+			Resource::Recharge(_) => "recharge-darker",
+			Resource::Sacrifice(_) => "sacrifice",
+			Resource::Upkeep(_) => "upkeep",
+			Resource::Overcast(_) => "overcast",
+		};
+		format!("assets/icons/Tango-{}.png", name)
+	}
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Skill {
-	icon_url: String,
+	pub icon_url: String,
 	pub name: String,
-	profession: Profession,
+	pub profession: Profession,
 	pub attribute: Option<String>,
 	skill_type: String,
-	description: String,
-	cost_energy: Option<u8>,
-	cost_adrenaline: Option<u8>,
-	cost_overcast: Option<u8>,
-	cost_upkeep: Option<i8>,
-	cost_sacrifice: Option<u8>,
-	cast_time: Option<f32>,
-	recharge_time: Option<u8>,
+	pub description: String,
+	pub resources: Vec<Resource>,
 	is_quest_reward: bool,
 	campaign: String,
 	pub split_by_game_mode: Option<GameMode>,
 	is_pve_only: bool,
-	is_elite: bool,
+	pub is_elite: bool,
 }
 
 impl Skill {
@@ -87,6 +180,43 @@ impl Skill {
 			Some(GameMode::PvP) => true,
 			Some(GameMode::Codex) => true,
 			_ => false,
+		}
+	}
+
+	pub fn icon_path(&self) -> String {
+		// I don't think we need to treat PvE/PvP split skills any differently here.
+		let allegiance = match &self.attribute {
+			Some(k) if k.starts_with("Kurzick") => "-Kurzick",
+			Some(l) if l.starts_with("Luxon") => "-Luxon",
+			_ => "",
+		};
+		format!("cache/images/{}{}.jpg", self.name, allegiance)
+	}
+
+	pub fn card_path(&self) -> String {
+		// I don't think we need to treat PvE/PvP split skills any differently here.
+		let allegiance = match &self.attribute {
+			Some(k) if k.starts_with("Kurzick") => "-Kurzick",
+			Some(l) if l.starts_with("Luxon") => "-Luxon",
+			_ => "",
+		};
+		format!("cards/{}{}.png", self.name, allegiance)
+	}
+
+	pub fn hidden() -> Self {
+		Self {
+			name: "Unidentified Skill".to_owned(),
+			icon_url: "/images/7/7b/Blind.jpg".to_owned(),
+			profession: Profession::Common,
+			attribute: Some("???".to_owned()),
+			skill_type: "???".to_owned(),
+			description: "??? ??...??...?? ????, ??????.".to_owned(),
+			is_elite: false,
+			is_pve_only: false,
+			is_quest_reward: false,
+			resources: vec![],
+			campaign: "???".to_owned(),
+			split_by_game_mode: None,
 		}
 	}
 }
@@ -129,35 +259,8 @@ impl TryFrom<ElementRef<'_>> for Skill {
 		}
 		let description = split_description.next().unwrap().to_string();
 
-		let mut cost_adrenaline = None;
-		let mut cost_overcast = None;
-		let mut cost_sacrifice = None;
-		let mut cost_upkeep = None;
-		let specific_col = cols.next();
-		match profession {
-			Profession::Necromancer | Profession::Ritualist => {
-				cost_sacrifice = specific_col.map(sacrifice_value).unwrap();
-			}
-			Profession::Warrior | Profession::Paragon | Profession::Dervish | Profession::Common => {
-				// Norn and Deldrimor Common skills have adrenaline costs
-				cost_adrenaline = specific_col.map(adrenaline_value).unwrap();
-			}
-			Profession::Elementalist => {
-				if name == "Over the Limit" {
-					cost_upkeep = specific_col.map(upkeep_value).unwrap();
-				} else {
-					cost_overcast = specific_col.map(overcast_value).unwrap();
-				}
-			}
-			Profession::Monk | Profession::Assassin => {
-				cost_upkeep = specific_col.map(upkeep_value).unwrap();
-			}
-			Profession::Mesmer | Profession::Ranger => (),
-		}
+		let resources = helpers::determine_resources(&mut cols.by_ref().take(4), profession, &*name);
 
-		let cost_energy: Option<u8> = cols.next().map(numerical_row_value).unwrap();
-		let cast_time: Option<f32> = cols.next().map(cast_time_value).unwrap();
-		let recharge_time: Option<u8> = cols.next().map(numerical_row_value).unwrap();
 		let is_quest_reward = !cols.next().unwrap().inner_html().is_empty();
 		let attribute: Option<String> = cols.next().map(attribute_value).unwrap();
 		let campaign: String = cols.next().map(innerText).unwrap();
@@ -183,15 +286,9 @@ impl TryFrom<ElementRef<'_>> for Skill {
 			description,
 			skill_type,
 			is_quest_reward,
-			cost_energy,
-			cast_time,
-			recharge_time,
+			resources,
 			attribute,
 			campaign,
-			cost_adrenaline,
-			cost_overcast,
-			cost_upkeep,
-			cost_sacrifice,
 			profession,
 			icon_url,
 			is_elite,
