@@ -8,6 +8,14 @@ use string_builder;
 mod helpers {
 	use super::*;
 
+	pub fn sanitize_file_name(name: String) -> String {
+		if cfg!(windows) {
+			name.replace("\"", "")
+		} else {
+			name
+		}
+	}
+
 	pub fn determine_profession(row: ElementRef) -> Profession {
 		let style = row.value().attr("style").unwrap();
 		let re = Regex::new(r"background: (#[0-9A-F]{6})").unwrap();
@@ -190,7 +198,8 @@ impl Skill {
 			Some(l) if l.starts_with("Luxon") => "-Luxon",
 			_ => "",
 		};
-		format!("cache/images/{}{}.jpg", self.name, allegiance)
+		let naive_path = format!("cache/images/{}{}.jpg", self.name, allegiance);
+		helpers::sanitize_file_name(naive_path)
 	}
 
 	pub fn card_path(&self) -> String {
@@ -200,7 +209,8 @@ impl Skill {
 			Some(l) if l.starts_with("Luxon") => "-Luxon",
 			_ => "",
 		};
-		format!("cards/{}{}.png", self.name, allegiance)
+		let naive_path = format!("cards/{}{}.png", self.name, allegiance);
+		helpers::sanitize_file_name(naive_path)
 	}
 
 	pub fn hidden() -> Self {
